@@ -1,0 +1,32 @@
+# Renderer cmakelists.txt
+cmake_minimum_required(VERSION 3.16)
+
+# Project (Renderer) setup
+project(Renderer LANGUAGES CXX)
+add_library(Renderer STATIC)
+set_target_properties(Renderer PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED YES
+)
+
+# Sources
+file(GLOB_RECURSE RENDERER_SOURCE 
+    "src/*.h"
+    "src/*.cpp"
+)
+target_sources(Renderer PRIVATE ${RENDERER_SOURCE})
+
+# Internal include
+include(VulkanSDK.cmake)
+target_include_directories(Renderer PRIVATE "${VULKAN_SDK_LOCATION}/Include")
+
+# Interface include
+target_include_directories(Renderer INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/include")
+
+# Output directories
+set_target_properties(Renderer PROPERTIES
+    CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Renderer"
+    CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Renderer"
+    CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Renderer"
+    OUTPUT_NAME "Renderer"
+)
