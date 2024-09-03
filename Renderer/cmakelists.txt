@@ -1,10 +1,10 @@
 # Renderer cmakelists.txt
 cmake_minimum_required(VERSION 3.16)
 
-# Project (Renderer) setup
-project(Renderer LANGUAGES CXX)
-add_library(Renderer STATIC)
-set_target_properties(Renderer PROPERTIES
+# Renderer setup
+project(${RENDERER_NAME} LANGUAGES CXX)
+add_library(${RENDERER_NAME} STATIC)
+set_target_properties(${RENDERER_NAME} PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED YES
 )
@@ -14,19 +14,19 @@ file(GLOB_RECURSE RENDERER_SOURCE
     "src/*.h"
     "src/*.cpp"
 )
-target_sources(Renderer PRIVATE ${RENDERER_SOURCE})
+target_sources(${RENDERER_NAME} PRIVATE ${RENDERER_SOURCE})
 
 # Internal include
 include(VulkanSDK.cmake)
-target_include_directories(Renderer PRIVATE "${VULKAN_SDK_LOCATION}/Include")
+target_include_directories(${RENDERER_NAME} PRIVATE "${VULKAN_SDK_LOCATION}/Include")
 
 # Interface include
-target_include_directories(Renderer INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/include")
+target_include_directories(${RENDERER_NAME} INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/src")
 
 # Output directories
-set_target_properties(Renderer PROPERTIES
-    CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Renderer"
-    CMAKE_LIBRARY_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Renderer"
-    CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_BINARY_DIR}/Renderer"
-    OUTPUT_NAME "Renderer"
-)
+# set_target_properties(${RENDERER_NAME} PROPERTIES
+#     CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${BUILD_DIR}/${RENDERER_NAME}"
+#     CMAKE_LIBRARY_OUTPUT_DIRECTORY "${BUILD_DIR}/${RENDERER_NAME}"
+#     CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BUILD_DIR}/${RENDERER_NAME}"
+#     OUTPUT_NAME "${RENDERER_NAME}"
+# )

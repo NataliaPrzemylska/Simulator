@@ -1,8 +1,16 @@
 # Top-level cmakelists.txt
 cmake_minimum_required(VERSION 3.16)
 
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/lib CACHE PATH "Where to place compiled static libraries.")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/lib CACHE PATH "Where to place compiled shared libraries.")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/build/bin CACHE PATH "Where to place compiled executables.")
+
 # Components names
 set(CMAKE_PROJECT_NAME Simulator)
+set(RENDERER_NAME Renderer)
+
+set(BUILD_DIR "${CMAKE_BINARY_DIR}/build")
+message(${BUILD_DIR})
 
 # General configuration
 if(NOT CMAKE_BUILD_TYPE)
@@ -19,9 +27,16 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
     CXX_STANDARD_REQUIRED YES
 )
 
+# set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
+#     CMAKE_ARCHIVE_OUTPUT_DIRECTORY "${BUILD_DIR}/${CMAKE_PROJECT_NAME}"
+#     CMAKE_LIBRARY_OUTPUT_DIRECTORY "${BUILD_DIR}/${CMAKE_PROJECT_NAME}"
+#     CMAKE_RUNTIME_OUTPUT_DIRECTORY "${BUILD_DIR}/${CMAKE_PROJECT_NAME}"
+#     OUTPUT_NAME "${CMAKE_PROJECT_NAME}"
+# )
+
 # Renderer
 add_subdirectory(Renderer)
-add_dependencies(${CMAKE_PROJECT_NAME} Renderer)
-target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE Renderer)
+add_dependencies(${CMAKE_PROJECT_NAME} ${RENDERER_NAME})
+target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${RENDERER_NAME})
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${CMAKE_PROJECT_NAME})
