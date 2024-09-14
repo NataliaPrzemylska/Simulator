@@ -1,0 +1,37 @@
+# Renderer cmakelists.txt
+cmake_minimum_required(VERSION 3.16)
+
+# Renderer setup
+project(${RENDERER_NAME} LANGUAGES CXX)
+add_library(${RENDERER_NAME} STATIC)
+set_target_properties(${RENDERER_NAME} PROPERTIES
+    CXX_STANDARD 20
+    CXX_STANDARD_REQUIRED YES
+)
+
+# Sources
+file(GLOB_RECURSE RENDERER_SOURCE 
+    "src/*.h"
+    "src/*.cpp"
+)
+target_sources(${RENDERER_NAME} PRIVATE ${RENDERER_SOURCE})
+
+# Include
+target_include_directories(${RENDERER_NAME} INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/src")
+target_include_directories(${RENDERER_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/src")
+
+# Dependencies setup
+    # Vulkan
+    include(VulkanSDK.cmake)
+    target_include_directories(${RENDERER_NAME} PUBLIC "${VULKAN_SDK_LOCATION}/Include")
+    target_link_directories(${RENDERER_NAME} PUBLIC "${VULKAN_SDK_LOCATION}/Lib")
+    target_link_libraries(${RENDERER_NAME} PUBLIC "Vulkan-1.lib")
+    # GLFW
+    message("\nGLFW:")
+    add_subdirectory(dependencies/glfw)
+    target_include_directories(${RENDERER_NAME} PUBLIC ${CMAKE_CURRENT_BINARY_DIR}/dependencies/glfw/include)
+    target_link_libraries(${RENDERER_NAME} PUBLIC GLFW3)
+    target_link_directories(${RENDERER_NAME} PUBLIC ${CMAKE_BINARY_DIR}/build/lib/${CMAKE_BUILD_TYPE})
+    # STB_IMAGE
+    target_include_directories(${RENDERER_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/dependencies/stb_image)
+    target_sources(${RENDERER_NAME} PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/dependencies/stb_image/stb_image.cpp)

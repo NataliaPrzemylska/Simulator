@@ -1,0 +1,39 @@
+# Cmake
+ZERO_CHECK
+ALL_BUILD
+*.cmake
+!dependencies/**.cmake
+!VulkanSDK.cmake
+**/CMakeFiles
+CMakeCache.txt
+
+# Visual Studio
+*.vcxproj
+*.vcxproj.filters
+*.vcxproj.user
+*.sln
+.vs/
+
+# Build
+build/
+Debug/
+*/*.dir/
+*.tlog
+*.exe
+*.lib
+*.dll
+*.pbd
+*.obj
+
+# Dependencies
+# !Renderer/dependencies
+
+# Source
+!*/src/
+!*/src/**
+!*/include/
+!*/include/**
+!*/deps/
+!*/deps/**
+!*/tests/
+!*/tests/**
