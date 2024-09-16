@@ -1,13 +1,17 @@
 #pragma once
+
 #include "Renderer/Core/Queue/Queue.h"
+#include "Renderer/Core/SwapChain/SwapChain.h"
 #include <vector>
 #include <memory>
+#include <iostream>
+#include <optional>
+
+#ifndef RENDERER_INCLUDE_GLFW_VULKAN
 #define VK_USE_PLATFORM_WIN32_KHR
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
-#include <iostream>
-#include <optional>
-#include "Renderer/Core/Queue/Queue.h"
+#endif // !RENDERER_INCLUDE_GLFW_VULKAN
 
 namespace Renderer{
 #ifndef NDEBUG
@@ -20,14 +24,15 @@ const std::vector<const char*> deviceExtensions = {
     VK_KHR_SWAPCHAIN_EXTENSION_NAME
 };
 
-uint32_t RateDevice(VkPhysicalDevice device);
+uint32_t RateDevice(const VkPhysicalDevice& device, const VkSurfaceKHR& surface);
 
 class Device
 {
+	friend class SwapChain;
 public:
 	Device() : m_VulkanInstance(), m_Surface(), m_PhysicalDevice(), m_LogicalDevice() {};
 	~Device() = default;
-	void init(GLFWwindow* window);
+	void init();
 	void cleanUp();
 	VkInstance* getVulkanInstance() { return &m_VulkanInstance; }
 private:
@@ -42,16 +47,21 @@ private:
 	const std::vector<const char*> m_ValidationLayers = { 
 		"VK_LAYER_KHRONOS_validation"
 	};
-	VkInstance m_VulkanInstance;
 	std::unique_ptr<VkDebugUtilsMessengerEXT> m_DebugMessenger = std::make_unique<VkDebugUtilsMessengerEXT>();
+	VkInstance m_VulkanInstance;
 	VkPhysicalDevice m_PhysicalDevice;
 	VkDevice m_LogicalDevice;
-	Queue m_GraphicsQueue;
 	VkSurfaceKHR m_Surface;
+
+	Queue m_GraphicsQueue;
+	Queue m_PresentQueue;
+	SwapChain m_SwapChain;
+
 private:
 	VKAPI_ATTR static VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;
 		return VK_FALSE;
 	};
+
 };
 }

@@ -3,9 +3,8 @@
 #include <exception>
 
 int main() {
-	Renderer::Application App;
 	try {
-		App.run();
+		(*Renderer::Application::Get()).run();
 	}
 	catch (std::runtime_error e) {
 		std::cerr << "ERROR: " << e.what() << std::endl;

@@ -68,7 +68,7 @@ namespace Renderer {
     }
 
     // Static functions
-    QueueFamilyIndices Queue::findQueueFamilies(VkPhysicalDevice device)
+    QueueFamilyIndices Queue::findQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR& surface)
     {
         QueueFamilyIndices indices;
 
@@ -81,10 +81,10 @@ namespace Renderer {
         for (const auto& queueFamily : queueFamilies) {
             if (queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) {
                 VkBool32 presentSupport = false;
-                //vkGetPhysicalDeviceSurfaceSupportKHR(device, i, m_Surface, &presentSupport);
+                vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &presentSupport);
 
-                //if (presentSupport)
-                 //   indices.presentFamily = i;
+                if (presentSupport)
+                   indices.presentFamily = i;
 
                 indices.graphicsFamily = i;
             }
@@ -101,10 +101,10 @@ namespace Renderer {
     }
 
     // Class functions
-    QueueFamilyIndices Queue::GetQueueFamiliesIndices(VkPhysicalDevice device, const bool& shouldBeSaved)
+    QueueFamilyIndices Queue::GetQueueFamiliesIndices(const VkPhysicalDevice& device, const VkSurfaceKHR& surface, const bool& shouldBeSaved)
     {
-        if (!shouldBeSaved) return findQueueFamilies(device);
-        if (!m_QueueFamilyIndices.isComplete()) m_QueueFamilyIndices = findQueueFamilies(device);
+        if (!shouldBeSaved) return findQueueFamilies(device, surface);
+        if (!m_QueueFamilyIndices.isComplete()) m_QueueFamilyIndices = findQueueFamilies(device, surface);
         return m_QueueFamilyIndices;
     }
 
@@ -116,7 +116,7 @@ namespace Renderer {
         }
 
 
-        std::set<uint32_t> uniqueQueueFamilies = { m_QueueFamilyIndices.graphicsFamily.value() };
+        std::set<uint32_t> uniqueQueueFamilies = { m_QueueFamilyIndices.graphicsFamily.value(), m_QueueFamilyIndices.presentFamily.value() };
 
         std::vector<float>* priorities = new std::vector<float>();
         (*priorities).resize(m_QueueFamilyIndices.getUniqueQueueFamilyIndices().size());

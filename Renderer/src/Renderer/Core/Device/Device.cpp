@@ -5,9 +5,10 @@
 #include <exception>
 #include <set>
 #include <map>
-    // Helpers
+#include "Application/Application.h"
+// Helpers
 
-        // Debug messenger related functions
+    // Debug messenger related functions
     VkResult DestroyDebugUtilsMessengerEXT(VkInstance instance, VkDebugUtilsMessengerEXT pDebugMessenger, const VkAllocationCallbacks* pAllocator) {
         auto func = (PFN_vkDestroyDebugUtilsMessengerEXT)vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT");
         if (func != nullptr) {
@@ -64,7 +65,7 @@
         return requiredExtensions.empty();
     }
 
-    uint32_t Renderer::RateDevice(VkPhysicalDevice device) {
+    uint32_t Renderer::RateDevice(const VkPhysicalDevice& device, const VkSurfaceKHR& surface) {
         VkPhysicalDeviceProperties deviceProperties;
         VkPhysicalDeviceFeatures deviceFeatures;
         vkGetPhysicalDeviceProperties(device, &deviceProperties);
@@ -77,7 +78,7 @@
             return 0;
         }
         // Vulkan needs queues
-        QueueFamilyIndices indices = Queue::GetQueueFamiliesIndices(device);
+        QueueFamilyIndices indices = Queue::GetQueueFamiliesIndices(device, surface);
         if (!indices.isComplete())
         {
             return 0;
@@ -87,17 +88,16 @@
         {
             return 0;
         }
+        // Check if device supports swap chains
+        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device, surface);
+        if (swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty()) {
+            return 0;
+        }
         // Application requires anisotropy
         if (!deviceFeatures.samplerAnisotropy)
         {
             return 0;
         }
-        /*
-        // Check if device supports swap chains
-        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
-        if (swapChainSupport.formats.empty() || swapChainSupport.presentModes.empty()) {
-            return 0;
-        }*/
 
 
         // Discrete GPUs have a significant performance advantage
@@ -111,29 +111,27 @@
         return score;
     }
 
-    // Logical Device
 
 
 
 // Basic functions
 
-    void Renderer::Device::init(GLFWwindow* nativeWindow)
+void Renderer::Device::init()
     {
         createVulkanInstance();
         setupDebugMessanger();
+        CreateSurface(Application::Get()->getGLFWwindow());
         PickPhysicalDevice();
-        #ifndef NDEBUG
-        showQueueFamilies(m_PhysicalDevice);
-        #endif // !NDEBUG
         CreateLogicalDevice();
-        CreateSurface(nativeWindow);
+        m_SwapChain.create(*this);
     }
 
 void Renderer::Device::cleanUp()
     {
+        m_SwapChain.cleanUp(m_LogicalDevice);
         vkDestroyDevice(m_LogicalDevice, nullptr);
-         if (enableValidationLayers)DestroyDebugUtilsMessengerEXT(m_VulkanInstance, (*m_DebugMessenger.get()), nullptr);
-         vkDestroySurfaceKHR(m_VulkanInstance, m_Surface, nullptr);
+        if (enableValidationLayers)DestroyDebugUtilsMessengerEXT(m_VulkanInstance, (*m_DebugMessenger.get()), nullptr);
+        vkDestroySurfaceKHR(m_VulkanInstance, m_Surface, nullptr);
         vkDestroyInstance(m_VulkanInstance, nullptr);
     }
 
@@ -246,12 +244,19 @@ void Renderer::Device::cleanUp()
         std::multimap<int, VkPhysicalDevice> candidates;
 
         for (const auto& device : devices) {
-            int score = RateDevice(device);
+            int score = RateDevice(device, m_Surface);
             candidates.insert(std::make_pair(score, device));
         }
 
         if (candidates.rbegin()->first > 0) {
             m_PhysicalDevice = candidates.rbegin()->second;
+            #ifndef NDEBUG
+
+            VkPhysicalDeviceProperties deviceProperties;
+            vkGetPhysicalDeviceProperties(m_PhysicalDevice, &deviceProperties);
+            std::cout << "Choosen physical device: " << deviceProperties.deviceName << std::endl;
+            #endif // !NDEBUG
+
         }
 
         else {
@@ -264,7 +269,13 @@ void Renderer::Device::cleanUp()
     void Renderer::Device::CreateLogicalDevice()
     {
         // queue setup
-        Queue::GetQueueFamiliesIndices(m_PhysicalDevice, true);
+
+
+        #ifndef NDEBUG
+        showQueueFamilies(m_PhysicalDevice);
+        #endif // !NDEBUG
+
+        Queue::GetQueueFamiliesIndices(m_PhysicalDevice, m_Surface, true);
         std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
         std::vector<float>* prorities = Queue::PopulateQueuesCreationInfo(queueCreateInfos);
 
@@ -294,7 +305,8 @@ void Renderer::Device::cleanUp()
         }
 
         // queue getting
-        vkGetDeviceQueue(m_LogicalDevice, Queue::GetQueueFamiliesIndices(m_PhysicalDevice).graphicsFamily.value(), 0, (m_GraphicsQueue.GetNativeQueue()).get());
+        vkGetDeviceQueue(m_LogicalDevice, Queue::GetQueueFamiliesIndices(m_PhysicalDevice, m_Surface).graphicsFamily.value(), 0, (m_GraphicsQueue.GetNativeQueue()).get());
+        vkGetDeviceQueue(m_LogicalDevice, Queue::GetQueueFamiliesIndices(m_PhysicalDevice, m_Surface).presentFamily.value(), 0, (m_PresentQueue.GetNativeQueue()).get());
 
         prorities->clear();
         delete prorities;
@@ -304,7 +316,7 @@ void Renderer::Device::cleanUp()
 
     void Renderer::Device::CreateSurface(GLFWwindow* nativeWindow)
     {
-        if (glfwCreateWindowSurface(m_VulkanInstance, nativeWindow, nullptr, &m_Surface) != VK_SUCCESS) {
+         if (glfwCreateWindowSurface(m_VulkanInstance, nativeWindow, nullptr, &m_Surface) != VK_SUCCESS) {
             throw std::runtime_error("failed to create window surface!");
         }
     }
