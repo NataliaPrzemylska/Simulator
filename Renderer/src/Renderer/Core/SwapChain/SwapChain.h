@@ -1,5 +1,6 @@
 #pragma once
 #ifndef RENDERER_INCLUDE_GLFW_VULKAN
+#define RENDERER_INCLUDE_GLFW_VULKAN
 #define VK_USE_PLATFORM_WIN32_KHR
 #define GLFW_INCLUDE_VULKAN
 #include <GLFW/glfw3.h>
@@ -7,6 +8,8 @@
 #include <vector>
 namespace Renderer {
     class Device;
+    class Renderer;
+    class GraphicsPipeline;
 
     //Helpers
     struct SwapChainSupportDetails
@@ -22,13 +25,18 @@ namespace Renderer {
 
 	class SwapChain
 	{
+        friend class GraphicsPipeline;
+        friend class Renderer;
 	public:
         void create(const Device& device);
         void cleanUp(VkDevice device);
+    private:
+        void createFrameBuffers(const Device& deivce);
 	private:
         VkSwapchainKHR m_NativeSwapChain;
         std::vector<VkImage> m_SwapChainImages;
         std::vector<VkImageView> m_SwapChainImageViews;
+        std::vector<VkFramebuffer> m_SwapChainFramebuffers;
 
         VkFormat m_ImageFormat;
         VkExtent2D m_Extent;

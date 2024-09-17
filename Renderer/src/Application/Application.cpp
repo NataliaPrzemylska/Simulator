@@ -21,6 +21,7 @@ namespace Renderer {
 	{
 		while (!glfwWindowShouldClose(m_Window.getNativeWindow())) {
 			glfwPollEvents();
+			m_Renderer.drawFrame();
 		}
 	}
 

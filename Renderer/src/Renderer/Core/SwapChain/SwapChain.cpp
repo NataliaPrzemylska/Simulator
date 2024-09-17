@@ -35,42 +35,43 @@ namespace Renderer {
 
     void SwapChain::create(const Device& device)
     {
-        VkSwapchainCreateInfoKHR createInfo{};
-        createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-        createInfo.surface = device.m_Surface;
+        VkSwapchainCreateInfoKHR SwapChainCreateInfo{};
+        SwapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+        SwapChainCreateInfo.surface = device.m_Surface;
 
         SwapChainSupportDetails supportDetails = querySwapChainSupport(device.m_PhysicalDevice, device.m_Surface);
 
         // Surface format
         for (const auto& availableFormat : supportDetails.formats) {
             if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB && availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR) {
-                createInfo.imageFormat = availableFormat.format;
-                createInfo.imageColorSpace = availableFormat.colorSpace;
+                m_ImageFormat = availableFormat.format;
+                SwapChainCreateInfo.imageColorSpace = availableFormat.colorSpace;
                 break;
             }
         }
-        if (createInfo.imageFormat == VK_FORMAT_UNDEFINED) {
-            createInfo.imageFormat = supportDetails.formats[0].format;
-            createInfo.imageColorSpace = supportDetails.formats[0].colorSpace;
+        if (m_ImageFormat == VK_FORMAT_UNDEFINED) {
+            m_ImageFormat = supportDetails.formats[0].format;
+            SwapChainCreateInfo.imageColorSpace = supportDetails.formats[0].colorSpace;
         }
+        SwapChainCreateInfo.imageFormat = m_ImageFormat;
 
         // Presentation mode
         for (const auto& availablePresentMode : supportDetails.presentModes) {
             if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR) {
-                createInfo.presentMode = availablePresentMode;
+                SwapChainCreateInfo.presentMode = availablePresentMode;
                 break;
             }
         }
-        if (createInfo.presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
+        if (SwapChainCreateInfo.presentMode == VK_PRESENT_MODE_IMMEDIATE_KHR)
         {
-            createInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
+            SwapChainCreateInfo.presentMode = VK_PRESENT_MODE_FIFO_KHR;
 
         }
-        createInfo.clipped = VK_TRUE;
+        SwapChainCreateInfo.clipped = VK_TRUE;
 
         // Swap extent
         if (supportDetails.capabilities.currentExtent.width != std::numeric_limits<uint32_t>::max()) {
-            createInfo.imageExtent = supportDetails.capabilities.currentExtent;
+            m_Extent = supportDetails.capabilities.currentExtent;
         }
         else {
             int width, height;
@@ -84,38 +85,39 @@ namespace Renderer {
             actualExtent.width = std::clamp(actualExtent.width, supportDetails.capabilities.minImageExtent.width, supportDetails.capabilities.maxImageExtent.width);
             actualExtent.height = std::clamp(actualExtent.height, supportDetails.capabilities.minImageExtent.height, supportDetails.capabilities.maxImageExtent.height);
 
-            createInfo.imageExtent = actualExtent;
+            m_Extent = actualExtent;
         }
+        SwapChainCreateInfo.imageExtent = m_Extent;
 
         // Image count
-        createInfo.minImageCount = supportDetails.capabilities.minImageCount + 1;
-        if (supportDetails.capabilities.maxImageCount > 0 && createInfo.minImageCount > supportDetails.capabilities.maxImageCount) {
-            createInfo.minImageCount = supportDetails.capabilities.maxImageCount;
+        SwapChainCreateInfo.minImageCount = supportDetails.capabilities.minImageCount + 1;
+        if (supportDetails.capabilities.maxImageCount > 0 && SwapChainCreateInfo.minImageCount > supportDetails.capabilities.maxImageCount) {
+            SwapChainCreateInfo.minImageCount = supportDetails.capabilities.maxImageCount;
         }
 
         //Other
-        createInfo.imageArrayLayers = 1;
-        createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
-        createInfo.preTransform = supportDetails.capabilities.currentTransform;
-        createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
-        createInfo.oldSwapchain = VK_NULL_HANDLE;
+        SwapChainCreateInfo.imageArrayLayers = 1;
+        SwapChainCreateInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+        SwapChainCreateInfo.preTransform = supportDetails.capabilities.currentTransform;
+        SwapChainCreateInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+        SwapChainCreateInfo.oldSwapchain = VK_NULL_HANDLE;
 
         // Queue families
         QueueFamilyIndices indices = Queue::GetQueueFamiliesIndices(device.m_PhysicalDevice, device.m_Surface);
         uint32_t queueFamilyIndices[] = { indices.graphicsFamily.value(), indices.presentFamily.value() };
 
         if (indices.graphicsFamily != indices.presentFamily) {
-            createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
-            createInfo.queueFamilyIndexCount = 2;
-            createInfo.pQueueFamilyIndices = queueFamilyIndices;
+            SwapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+            SwapChainCreateInfo.queueFamilyIndexCount = 2;
+            SwapChainCreateInfo.pQueueFamilyIndices = queueFamilyIndices;
         }
         else {
-            createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
-            createInfo.queueFamilyIndexCount = 0;
-            createInfo.pQueueFamilyIndices = nullptr;
+            SwapChainCreateInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+            SwapChainCreateInfo.queueFamilyIndexCount = 0;
+            SwapChainCreateInfo.pQueueFamilyIndices = nullptr;
         }
 
-        if (vkCreateSwapchainKHR(device.m_LogicalDevice, &createInfo, nullptr, &m_NativeSwapChain) != VK_SUCCESS) {
+        if (vkCreateSwapchainKHR(device.m_LogicalDevice, &SwapChainCreateInfo, nullptr, &m_NativeSwapChain) != VK_SUCCESS) {
             throw std::runtime_error("failed to create swap chain! :(");
         }
 
@@ -155,6 +157,32 @@ namespace Renderer {
         for (VkImageView imageView : m_SwapChainImageViews)
         {
             vkDestroyImageView(device, imageView, nullptr);
+        }
+        for (auto framebuffer : m_SwapChainFramebuffers) {
+            vkDestroyFramebuffer(device, framebuffer, nullptr);
+        }
+    }
+
+    void SwapChain::createFrameBuffers(const Device& device)
+    {
+        m_SwapChainFramebuffers.resize(m_SwapChainImageViews.size());
+        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) {
+            VkImageView attachments[] = {
+                m_SwapChainImageViews[i]
+            };
+
+            VkFramebufferCreateInfo framebufferInfo{};
+            framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+            framebufferInfo.renderPass = device.m_GraphicsPipeline.m_RenderPass;
+            framebufferInfo.attachmentCount = 1;
+            framebufferInfo.pAttachments = attachments;
+            framebufferInfo.width = m_Extent.width;
+            framebufferInfo.height = m_Extent.height;
+            framebufferInfo.layers = 1;
+
+            if (vkCreateFramebuffer(device.m_LogicalDevice, &framebufferInfo, nullptr, &m_SwapChainFramebuffers[i]) != VK_SUCCESS) {
+                throw std::runtime_error("failed to create framebuffer! :(");
+            }
         }
     }
 

@@ -6,7 +6,9 @@ namespace Renderer {
 		void run();
 		void init();
 		void cleanUp();
+		void drawFrame();
 	private:
 		Device m_Device;
+
 	};
 }

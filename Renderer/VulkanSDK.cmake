@@ -1,5 +1,5 @@
 # This file is used the correctly locate Vulkan SDK and choose the best suited version
-# It's assumed the Vulkan SDK is located in C:/VulkanSDK. If that is incorrect, change the next line appropriately
+# It's assumed the Vulkan SDKs are located in C:/VulkanSDK. If that is incorrect, change the next line appropriately
 set(VULKAN_SDK_LOCATION "C:/VulkanSDK")
 
 
@@ -17,3 +17,4 @@ foreach(FILE ${ALL_FILES})
 endforeach()
 
 set(VULKAN_SDK_LOCATION "${VULKAN_SDK_LOCATION}/${LATEST_VERSION}" CACHE INTERNAL "${VULKAN_SDK_LOCATION}/${LATEST_VERSION}")
+message(STATUS "VULKAN_SDK_LOCATION is set to: ${VULKAN_SDK_LOCATION}")
