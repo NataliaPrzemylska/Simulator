@@ -6,16 +6,22 @@
 #include <GLFW/glfw3.h>
 #endif
 namespace Renderer {
+
 	class FrameManager
 	{
+	friend class Renderer;
 	public:
 		void init();
 		void cleanUp();
 		void recordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex);
+		void CreateSyncObjects();
 		void createCommandBuffer();
 		VkCommandBuffer m_CommandBuffer;
 	private:
 		VkCommandPool m_CommandPool;
+		VkSemaphore m_ImageAvailableSemaphore;
+		VkSemaphore m_RenderFinishedSemaphore;
+		VkFence m_InFlightFence;
 
 	};
 }

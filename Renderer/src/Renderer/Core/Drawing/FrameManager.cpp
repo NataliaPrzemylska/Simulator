@@ -6,10 +6,15 @@
 void Renderer::FrameManager::init()
 {
 	createCommandBuffer();
+	CreateSyncObjects();
 }
 
 void Renderer::FrameManager::cleanUp()
 {
+	vkDeviceWaitIdle(Application::Get()->getNativeDevice());
+	vkDestroySemaphore(Application::Get()->getNativeDevice(), m_ImageAvailableSemaphore, nullptr);
+	vkDestroySemaphore(Application::Get()->getNativeDevice(), m_RenderFinishedSemaphore, nullptr);
+	vkDestroyFence(Application::Get()->getNativeDevice(), m_InFlightFence, nullptr);
 	vkDestroyCommandPool(Application::Get()->getNativeDevice(), m_CommandPool, nullptr);
 }
 
@@ -23,7 +28,7 @@ void Renderer::FrameManager::createCommandBuffer()
 	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
 	if (vkCreateCommandPool(device.m_LogicalDevice, &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create command pool!");
+		throw std::runtime_error("failed to create command pool! :(");
 	}
 	VkCommandBufferAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -32,7 +37,7 @@ void Renderer::FrameManager::createCommandBuffer()
 	allocInfo.commandBufferCount = 1;
 
 	if (vkAllocateCommandBuffers(device.m_LogicalDevice, &allocInfo, &m_CommandBuffer) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate command buffers!");
+		throw std::runtime_error("failed to allocate command buffers! :(");
 	}
 }
 
@@ -75,4 +80,21 @@ void Renderer::FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer! :(");
 	}
+}
+
+
+void Renderer::FrameManager::CreateSyncObjects()
+{
+	VkDevice& device = Application::Get()->getNativeDevice();
+	VkSemaphoreCreateInfo semaphoreInfo{};
+	semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+	VkFenceCreateInfo fenceInfo{};
+	fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+	fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+	if (vkCreateSemaphore(device, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphore) != VK_SUCCESS ||
+		vkCreateSemaphore(device, &semaphoreInfo, nullptr, &m_RenderFinishedSemaphore) != VK_SUCCESS ||
+		vkCreateFence(device, &fenceInfo, nullptr, &m_InFlightFence) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create semaphores and/or fences! :(");
+	}
+
 }

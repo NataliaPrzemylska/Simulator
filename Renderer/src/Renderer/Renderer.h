@@ -23,12 +23,8 @@ namespace Renderer {
 		GraphicsPipeline m_GraphicsPipeline;
 		FrameManager m_FrameManager;
 
-		VkSemaphore m_ImageAvailableSemaphore;
-		VkSemaphore m_RenderFinishedSemaphore;
-		VkFence m_InFlightFence;
 	private:
 		void createRenderPass();
-		void CreateSyncObjects();
 
 	};
 }
