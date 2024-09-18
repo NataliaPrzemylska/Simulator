@@ -123,21 +123,13 @@ void Renderer::Device::init()
         CreateSurface(Application::Get()->getGLFWwindow());
         PickPhysicalDevice();
         CreateLogicalDevice();
-        m_SwapChain.create(*this);
-        m_GraphicsPipeline.init(*this);
-        CreateSyncObjects();
     }
 
 void Renderer::Device::cleanUp()
     {
-        vkDestroySemaphore(m_LogicalDevice, m_ImageAvailableSemaphore, nullptr);
-        vkDestroySemaphore(m_LogicalDevice, m_RenderFinishedSemaphore, nullptr);
-        vkDestroyFence(m_LogicalDevice, m_InFlightFence, nullptr);
-        m_GraphicsPipeline.cleanUp(*this);
-        m_SwapChain.cleanUp(m_LogicalDevice);
         vkDestroyDevice(m_LogicalDevice, nullptr);
-        if (enableValidationLayers)DestroyDebugUtilsMessengerEXT(m_VulkanInstance, (*m_DebugMessenger.get()), nullptr);
         vkDestroySurfaceKHR(m_VulkanInstance, m_Surface, nullptr);
+        if (enableValidationLayers)DestroyDebugUtilsMessengerEXT(m_VulkanInstance, (*m_DebugMessenger.get()), nullptr);
         vkDestroyInstance(m_VulkanInstance, nullptr);
     }
 
@@ -325,19 +317,4 @@ void Renderer::Device::cleanUp()
          if (glfwCreateWindowSurface(m_VulkanInstance, nativeWindow, nullptr, &m_Surface) != VK_SUCCESS) {
             throw std::runtime_error("failed to create window surface!");
         }
-    }
-
-    void Renderer::Device::CreateSyncObjects()
-    {
-        VkSemaphoreCreateInfo semaphoreInfo{};
-        semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-        VkFenceCreateInfo fenceInfo{};
-        fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
-        fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
-        if (vkCreateSemaphore(m_LogicalDevice, &semaphoreInfo, nullptr, &m_ImageAvailableSemaphore) != VK_SUCCESS ||
-            vkCreateSemaphore(m_LogicalDevice, &semaphoreInfo, nullptr, &m_RenderFinishedSemaphore) != VK_SUCCESS ||
-            vkCreateFence(m_LogicalDevice, &fenceInfo, nullptr, &m_InFlightFence) != VK_SUCCESS) {
-            throw std::runtime_error("failed to create semaphores!");
-        }
-
     }

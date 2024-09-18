@@ -11,6 +11,7 @@
 #include <iostream>
 
 namespace Renderer {
+	class Renderer;
 	void showQueueFamilies(VkPhysicalDevice physicalDevice);
 
 	struct QueueFamilyIndices {
@@ -34,6 +35,7 @@ namespace Renderer {
 
 	class Queue
 	{
+		friend class Renderer;
 	public:
 		static QueueFamilyIndices findQueueFamilies(const VkPhysicalDevice& device, const VkSurfaceKHR& surface);
 		static QueueFamilyIndices GetQueueFamiliesIndices(const VkPhysicalDevice& device, const VkSurfaceKHR& surface, const bool& shouldBeSaved = false);

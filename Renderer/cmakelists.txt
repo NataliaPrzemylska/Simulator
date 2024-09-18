@@ -20,6 +20,8 @@ target_sources(${RENDERER_NAME} PRIVATE ${RENDERER_SOURCE})
 target_include_directories(${RENDERER_NAME} INTERFACE "${CMAKE_CURRENT_BINARY_DIR}/src")
 target_include_directories(${RENDERER_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}/src")
 
+# Shaders
+target_compile_definitions(${RENDERER_NAME} PRIVATE SHADERS_FOLDER=\"${CMAKE_CURRENT_BINARY_DIR}/Shaders\")
 # Dependencies setup
     # Vulkan
     include(VulkanSDK.cmake)

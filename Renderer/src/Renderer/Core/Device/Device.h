@@ -1,7 +1,6 @@
 #pragma once
 
 #include "Renderer/Core/Queue/Queue.h"
-#include "Renderer/Core/SwapChain/SwapChain.h"
 #include "Renderer/Core/GraphicsPipeline/GraphicsPipeline.h"
 #include <vector>
 #include <memory>
@@ -40,6 +39,7 @@ public:
 	void init();
 	void cleanUp();
 	VkInstance* getVulkanInstance() { return &m_VulkanInstance; }
+	VkDevice& getNativeDevice() { return m_LogicalDevice; };
 private:
 	void createVulkanInstance();
 	void setupDebugMessanger();
@@ -48,8 +48,8 @@ private:
 	void PickPhysicalDevice();
 	void CreateLogicalDevice();
 	void CreateSurface(GLFWwindow* nativeWindow);
-	void CreateSyncObjects();
-private:
+
+public:
 	const std::vector<const char*> m_ValidationLayers = { 
 		"VK_LAYER_KHRONOS_validation"
 	};
@@ -58,14 +58,10 @@ private:
 	VkPhysicalDevice m_PhysicalDevice;
 	VkDevice m_LogicalDevice;
 	VkSurfaceKHR m_Surface;
-	VkSemaphore m_ImageAvailableSemaphore;
-	VkSemaphore m_RenderFinishedSemaphore;
-	VkFence m_InFlightFence;
 
 	Queue m_GraphicsQueue;
 	Queue m_PresentQueue;
-	SwapChain m_SwapChain;
-	GraphicsPipeline m_GraphicsPipeline;
+private:
 private:
 	VKAPI_ATTR static VkBool32 VKAPI_CALL debugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity, VkDebugUtilsMessageTypeFlagsEXT messageTypes, const VkDebugUtilsMessengerCallbackDataEXT* pCallbackData, void* pUserData) {
 		std::cerr << "validation layer: " << pCallbackData->pMessage << std::endl;

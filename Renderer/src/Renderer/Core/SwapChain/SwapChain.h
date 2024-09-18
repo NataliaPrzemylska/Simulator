@@ -10,6 +10,7 @@ namespace Renderer {
     class Device;
     class Renderer;
     class GraphicsPipeline;
+    class FrameManager;
 
     //Helpers
     struct SwapChainSupportDetails
@@ -27,11 +28,12 @@ namespace Renderer {
 	{
         friend class GraphicsPipeline;
         friend class Renderer;
+        friend class FrameManager;
 	public:
-        void create(const Device& device);
-        void cleanUp(VkDevice device);
+        void create();
+        void cleanUp();
     private:
-        void createFrameBuffers(const Device& deivce);
+        void createFrameBuffers();
 	private:
         VkSwapchainKHR m_NativeSwapChain;
         std::vector<VkImage> m_SwapChainImages;

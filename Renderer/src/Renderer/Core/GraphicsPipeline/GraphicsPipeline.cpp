@@ -1,8 +1,12 @@
 #include "GraphicsPipeline.h"
 #include "Renderer/Core/Device/Device.h"
 #include "Renderer/Core/Queue/Queue.h"
+#include "Renderer/Renderer.h"
+#include <Application/Application.h>
+#define VERTEX_SHADER_PATH SHADERS_FOLDER "/Vertex/vert.spv"
+#define FRAGMENT_SHADER_PATH SHADERS_FOLDER "/Fragment/frag.spv"
 
-void Renderer::GraphicsPipeline::init(Device& device)
+void Renderer::GraphicsPipeline::init()
 {
 	// Graphics pipeline:
 	//	Vertex data
@@ -31,6 +35,8 @@ void Renderer::GraphicsPipeline::init(Device& device)
 	//		v
 	//	Framebuffer
 
+	Device& device = Application::Get()->getDevice();
+
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
 	vertexInputInfo.vertexBindingDescriptionCount = 0;
@@ -43,7 +49,7 @@ void Renderer::GraphicsPipeline::init(Device& device)
 	inputAssembly.topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 	inputAssembly.primitiveRestartEnable = VK_FALSE;
 
-	m_VertexShader.LoadShader(device, std::filesystem::path("C:/Users/Natal/Documents/Random/simulator/Simulator/Renderer/Shaders/Vertex/vert.spv"));
+	m_VertexShader.LoadShader(std::filesystem::path(VERTEX_SHADER_PATH));
 	VkPipelineShaderStageCreateInfo vertShaderStageInfo{};
 	vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	vertShaderStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
@@ -93,7 +99,7 @@ void Renderer::GraphicsPipeline::init(Device& device)
 	colorBlending.blendConstants[2] = 0.0f;
 	colorBlending.blendConstants[3] = 0.0f;
 
-	m_FragmentShader.LoadShader(device, std::filesystem::path("C:/Users/Natal/Documents/Random/simulator/Simulator/Renderer/Shaders/Fragment/frag.spv"));
+	m_FragmentShader.LoadShader(std::filesystem::path(FRAGMENT_SHADER_PATH));
 	VkPipelineShaderStageCreateInfo fragShaderStageInfo{};
 	fragShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
 	fragShaderStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -104,13 +110,13 @@ void Renderer::GraphicsPipeline::init(Device& device)
 	VkViewport viewport{};
 	viewport.x = 0.0f;
 	viewport.y = 0.0f;
-	viewport.width = (float)device.m_SwapChain.m_Extent.width;
-	viewport.height = (float)device.m_SwapChain.m_Extent.height;
+	viewport.width = (float)(Application::Get()->m_Renderer.m_SwapChain.m_Extent.width);
+	viewport.height = (float)Application::Get()->m_Renderer.m_SwapChain.m_Extent.height;
 	viewport.minDepth = 0.0f;
 	viewport.maxDepth = 1.0f;
 	VkRect2D scissor{};
 	scissor.offset = { 0, 0 };
-	scissor.extent = device.m_SwapChain.m_Extent;
+	scissor.extent = Application::Get()->m_Renderer.m_SwapChain.m_Extent;
 
 	std::vector<VkDynamicState> dynamicStates = {
 	VK_DYNAMIC_STATE_VIEWPORT,
@@ -141,7 +147,7 @@ void Renderer::GraphicsPipeline::init(Device& device)
 	if (vkCreatePipelineLayout(device.m_LogicalDevice, &pipelineLayoutInfo, nullptr, &m_PipelineLayout) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create pipeline layout! :(");
 	}
-	createRenderPass(device);
+
 
 	VkGraphicsPipelineCreateInfo pipelineInfo{};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -157,7 +163,7 @@ void Renderer::GraphicsPipeline::init(Device& device)
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = &dynamicState;
 	pipelineInfo.layout = m_PipelineLayout;
-	pipelineInfo.renderPass = m_RenderPass;
+	pipelineInfo.renderPass = Application::Get()->getRenderer().m_RenderPass;
 	pipelineInfo.subpass = 0;
 	pipelineInfo.basePipelineHandle = VK_NULL_HANDLE;
 	pipelineInfo.basePipelineIndex = -1;
@@ -165,131 +171,15 @@ void Renderer::GraphicsPipeline::init(Device& device)
 	if (vkCreateGraphicsPipelines(device.m_LogicalDevice, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_NativePipeline) != VK_SUCCESS) {
 		throw std::runtime_error("failed to create graphics pipeline! :(");
 	}
-	createCommandBuffer(device);
  }
 
-void Renderer::GraphicsPipeline::cleanUp(const Device& device)
+void Renderer::GraphicsPipeline::cleanUp()
 {
-	vkDestroyCommandPool(device.m_LogicalDevice, m_CommandPool, nullptr);
-	vkDestroyPipeline(device.m_LogicalDevice, m_NativePipeline, nullptr);
-	vkDestroyPipelineLayout(device.m_LogicalDevice, m_PipelineLayout, nullptr);
-	vkDestroyRenderPass(device.m_LogicalDevice, m_RenderPass, nullptr);
-	m_FragmentShader.CleanUp(device);
-	m_VertexShader.CleanUp(device);
-}
 
-void Renderer::GraphicsPipeline::createRenderPass(Device& device)
-{
-	// Render pass utilties
-	VkAttachmentDescription colorAttachment{};
-	colorAttachment.format = device.m_SwapChain.m_ImageFormat;
-	colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT; 
-	colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-	colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
-	colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-	colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
-	colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
-	colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
-
-	VkAttachmentReference colorAttachmentRef{};
-	colorAttachmentRef.attachment = 0;
-	colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
-
-
-	VkSubpassDependency dependency{};
-	dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
-	dependency.dstSubpass = 0;
-	dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.srcAccessMask = 0;
-	dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-	dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
-
-	VkSubpassDescription subpass{};
-	subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-	subpass.colorAttachmentCount = 1;
-	subpass.pColorAttachments = &colorAttachmentRef;
-
-	// Render pass
-	VkRenderPassCreateInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-	renderPassInfo.attachmentCount = 1;
-	renderPassInfo.pAttachments = &colorAttachment;
-	renderPassInfo.subpassCount = 1;
-	renderPassInfo.pSubpasses = &subpass;
-	renderPassInfo.dependencyCount = 1;
-	renderPassInfo.pDependencies = &dependency;
-
-	if (vkCreateRenderPass(device.m_LogicalDevice, &renderPassInfo, nullptr, &m_RenderPass) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create render pass!");
-	}
-
-	createFrameBuffers(device);
-}
-
-void Renderer::GraphicsPipeline::createFrameBuffers(Device& device)
-{
-	(device).m_SwapChain.createFrameBuffers(device);
-}
-
-void Renderer::GraphicsPipeline::createCommandBuffer(Device& device)
-{
-	QueueFamilyIndices queueFamilyIndices = Queue::findQueueFamilies(device.m_PhysicalDevice, device.m_Surface);
-
-	VkCommandPoolCreateInfo poolInfo{};
-	poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-	poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
-	poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsFamily.value();
-	if (vkCreateCommandPool(device.m_LogicalDevice, &poolInfo, nullptr, &m_CommandPool) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create command pool!");
-	}
-	VkCommandBufferAllocateInfo allocInfo{};
-	allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-	allocInfo.commandPool = m_CommandPool;
-	allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-	allocInfo.commandBufferCount = 1;
-
-	if (vkAllocateCommandBuffers(device.m_LogicalDevice, &allocInfo, &m_CommandBuffer) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate command buffers!");
-	}
-}
-
-void Renderer::GraphicsPipeline::recordCommandBuffer(Device& device, VkCommandBuffer commandBuffer, uint32_t imageIndex)
-{
-	VkCommandBufferBeginInfo beginInfo{};
-	beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-	beginInfo.flags = 0; // Optional
-	beginInfo.pInheritanceInfo = nullptr; // Optional
-
-	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
-		throw std::runtime_error("failed to begin recording command buffer!");
-	}
-	VkRenderPassBeginInfo renderPassInfo{};
-	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-	renderPassInfo.renderPass = m_RenderPass;
-	renderPassInfo.framebuffer = device.m_SwapChain.m_SwapChainFramebuffers[imageIndex];
-	renderPassInfo.renderArea.offset = { 0, 0 };
-	renderPassInfo.renderArea.extent = device.m_SwapChain.m_Extent;
-	VkClearValue clearColor = { {{0.0f, 0.0f, 0.0f, 1.0f}} };
-	renderPassInfo.clearValueCount = 1;
-	renderPassInfo.pClearValues = &clearColor;
-	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
-	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_NativePipeline);
-	VkViewport viewport{};
-	viewport.x = 0.0f;
-	viewport.y = 0.0f;
-	viewport.width = static_cast<float>(device.m_SwapChain.m_Extent.width);
-	viewport.height = static_cast<float>(device.m_SwapChain.m_Extent.height);
-	viewport.minDepth = 0.0f;
-	viewport.maxDepth = 1.0f;
-	vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-	VkRect2D scissor{};
-	scissor.offset = { 0, 0 };
-	scissor.extent = device.m_SwapChain.m_Extent;
-	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-	vkCmdDraw(commandBuffer, 3, 1, 0, 0);
-	vkCmdEndRenderPass(commandBuffer);
-	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
-		throw std::runtime_error("failed to record command buffer! :(");
-	}
+	VkDevice& device = Application::Get()->getNativeDevice();
+	vkDestroyPipeline(device, m_NativePipeline, nullptr);
+	vkDestroyPipelineLayout(device, m_PipelineLayout, nullptr);
+	vkDestroyRenderPass(device, Application::Get()->getRenderer().m_RenderPass, nullptr);
+	m_FragmentShader.CleanUp();
+	m_VertexShader.CleanUp();
 }

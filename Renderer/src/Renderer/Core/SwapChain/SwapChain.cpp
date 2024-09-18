@@ -33,8 +33,9 @@ namespace Renderer {
     }
 
 
-    void SwapChain::create(const Device& device)
+    void SwapChain::create()
     {
+        Device& device = Application::Get()->getDevice();
         VkSwapchainCreateInfoKHR SwapChainCreateInfo{};
         SwapChainCreateInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
         SwapChainCreateInfo.surface = device.m_Surface;
@@ -151,8 +152,9 @@ namespace Renderer {
 
     }
 
-    void SwapChain::cleanUp(VkDevice device)
+    void SwapChain::cleanUp()
     {
+        VkDevice& device = Application::Get()->getNativeDevice();
         vkDestroySwapchainKHR(device, m_NativeSwapChain, nullptr);
         for (VkImageView imageView : m_SwapChainImageViews)
         {
@@ -163,8 +165,9 @@ namespace Renderer {
         }
     }
 
-    void SwapChain::createFrameBuffers(const Device& device)
+    void SwapChain::createFrameBuffers()
     {
+        Device& device = Application::Get()->getDevice();
         m_SwapChainFramebuffers.resize(m_SwapChainImageViews.size());
         for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) {
             VkImageView attachments[] = {
@@ -173,7 +176,7 @@ namespace Renderer {
 
             VkFramebufferCreateInfo framebufferInfo{};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass = device.m_GraphicsPipeline.m_RenderPass;
+            framebufferInfo.renderPass = Application::Get()->getRenderer().m_RenderPass;
             framebufferInfo.attachmentCount = 1;
             framebufferInfo.pAttachments = attachments;
             framebufferInfo.width = m_Extent.width;
