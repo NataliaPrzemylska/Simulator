@@ -130,7 +130,7 @@ namespace Renderer {
         
         // Creating swapchain imageViews
         m_SwapChainImageViews.resize(m_SwapChainImages.size());
-        for (size_t i = 0; i < m_SwapChainImageViews.size(); i++) {
+        for (size_t i = 0; i < imageCount; i++) {
             VkImageViewCreateInfo createInfo{};
             createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
             createInfo.image = m_SwapChainImages[i];
