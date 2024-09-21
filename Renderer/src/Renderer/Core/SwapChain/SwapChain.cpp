@@ -165,6 +165,13 @@ namespace Renderer {
         }
     }
 
+    void SwapChain::recreate()
+    {
+        vkDeviceWaitIdle(Application::Get()->getNativeDevice());
+        cleanUp(); 
+        create();
+    }
+
     void SwapChain::createFrameBuffers()
     {
         Device& device = Application::Get()->getDevice();

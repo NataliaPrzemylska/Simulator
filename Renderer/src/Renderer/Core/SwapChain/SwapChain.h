@@ -32,6 +32,7 @@ namespace Renderer {
 	public:
         void create();
         void cleanUp();
+        void recreate();
     private:
         void createFrameBuffers();
 	private:

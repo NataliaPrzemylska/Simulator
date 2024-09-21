@@ -45,9 +45,18 @@ void Renderer::FrameManager::createCommandBuffer()
 
 void Renderer::FrameManager::drawFrame()
 {
+	Renderer& renderer = Application::Get()->m_Renderer;
 	uint32_t imageIndex;
 	vkWaitForFences(Application::Get()->getNativeDevice(), 1, &m_InFlightFences[m_CurrentFrameInFlightIndex], VK_TRUE, UINT64_MAX);
-	vkAcquireNextImageKHR(Application::Get()->getNativeDevice(), Application::Get()->m_Renderer.m_SwapChain.m_NativeSwapChain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrameInFlightIndex], VK_NULL_HANDLE, &imageIndex);
+	VkResult result = vkAcquireNextImageKHR(Application::Get()->getNativeDevice(), renderer.m_SwapChain.m_NativeSwapChain, UINT64_MAX, m_ImageAvailableSemaphores[m_CurrentFrameInFlightIndex], VK_NULL_HANDLE, &imageIndex);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR)
+	{
+		renderer.m_SwapChain.recreate();
+		return;
+	}
+	 else if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR) {
+		 throw std::runtime_error("failed to acquire swap chain image!");
+	}
 	vkResetFences(Application::Get()->getNativeDevice(), 1, &m_InFlightFences[m_CurrentFrameInFlightIndex]);
 
 	vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrameInFlightIndex], 0);
@@ -65,7 +74,7 @@ void Renderer::FrameManager::drawFrame()
 	submitInfo.signalSemaphoreCount = 1;
 	submitInfo.pSignalSemaphores = &m_RenderFinishedSemaphores[m_CurrentFrameInFlightIndex];
 
-	if (vkQueueSubmit((*Application::Get()->m_Renderer.GetDevice().m_GraphicsQueue.GetNativeQueue().get()), 1, &submitInfo, m_InFlightFences[m_CurrentFrameInFlightIndex]) != VK_SUCCESS) {
+	if (vkQueueSubmit((*renderer.GetDevice().m_GraphicsQueue.GetNativeQueue().get()), 1, &submitInfo, m_InFlightFences[m_CurrentFrameInFlightIndex]) != VK_SUCCESS) {
 		throw std::runtime_error("failed to submit draw command buffer!");
 	}
 
@@ -76,11 +85,17 @@ void Renderer::FrameManager::drawFrame()
 	presentInfo.waitSemaphoreCount = 1;
 	presentInfo.pWaitSemaphores = &m_RenderFinishedSemaphores[m_CurrentFrameInFlightIndex];
 	presentInfo.swapchainCount = 1;
-	presentInfo.pSwapchains = &Application::Get()->m_Renderer.m_SwapChain.m_NativeSwapChain;
+	presentInfo.pSwapchains = &renderer.m_SwapChain.m_NativeSwapChain;
 	presentInfo.pImageIndices = &imageIndex;
 	presentInfo.pResults = nullptr;
 
-	vkQueuePresentKHR((*Application::Get()->m_Renderer.GetDevice().m_PresentQueue.GetNativeQueue().get()), &presentInfo);
+	result = vkQueuePresentKHR((*renderer.GetDevice().m_PresentQueue.GetNativeQueue().get()), &presentInfo);
+	if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR) {
+		renderer.m_SwapChain.recreate();
+	}
+	else if (result != VK_SUCCESS) {
+		throw std::runtime_error("failed to present swap chain image!");
+	}
 	m_CurrentFrameInFlightIndex = (m_CurrentFrameInFlightIndex + 1) % MAX_FRAMES_IN_FLIGHT;
 }
 
