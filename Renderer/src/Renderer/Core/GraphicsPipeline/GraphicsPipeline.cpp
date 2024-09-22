@@ -2,7 +2,8 @@
 #include "Renderer/Core/Device/Device.h"
 #include "Renderer/Core/Queue/Queue.h"
 #include "Renderer/Renderer.h"
-#include <Application/Application.h>
+#include "Application/Application.h"
+#include "Renderer/Core/Resources/Vertex/Vertex.h"
 #define VERTEX_SHADER_PATH SHADERS_FOLDER "/Vertex/vert.spv"
 #define FRAGMENT_SHADER_PATH SHADERS_FOLDER "/Fragment/frag.spv"
 
@@ -39,10 +40,11 @@ void Renderer::GraphicsPipeline::init()
 
 	VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
 	vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-	vertexInputInfo.vertexBindingDescriptionCount = 0;
-	vertexInputInfo.pVertexBindingDescriptions = nullptr;
-	vertexInputInfo.vertexAttributeDescriptionCount = 0;
-	vertexInputInfo.pVertexAttributeDescriptions = nullptr;
+	vertexInputInfo.vertexBindingDescriptionCount = 1;
+	VkVertexInputBindingDescription vertexBindDesc = Vertex::getBindingDescription();
+	vertexInputInfo.pVertexBindingDescriptions = &vertexBindDesc;
+	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(Vertex::getAttributeDescriptions().size());
+	vertexInputInfo.pVertexAttributeDescriptions = Vertex::getAttributeDescriptions().data();
 
 	VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
 	inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;

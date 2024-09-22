@@ -1,4 +1,5 @@
 #include "Application.h"
+#include "Bench.h"
 namespace Renderer {
 	std::shared_ptr<Application> Application::ApplicationInstance = std::make_shared<Application>();
 	
@@ -12,7 +13,9 @@ namespace Renderer {
 	{
 		m_Window.init();
 		m_Renderer.init();
+		BEGIN_SESSION("main loop", "mainloop.json");
 		this->mainLoop();
+		END_SESSION();
 		m_Renderer.cleanUp();
 		m_Window.cleanUp();
 	}

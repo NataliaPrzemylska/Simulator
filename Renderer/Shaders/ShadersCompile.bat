@@ -12,9 +12,9 @@ for /f "tokens=6" %%a in ("%line%") do (
 )
 echo %VULKAN_SDK_LOCATION%
 cd Fragment
-%VULKAN_SDK_LOCATION%\Bin\glslc.exe Triangle.frag -o frag.spv
+%VULKAN_SDK_LOCATION%\Bin\glslc.exe shader.frag -o frag.spv
 cd ../Vertex
-%VULKAN_SDK_LOCATION%\Bin\glslc.exe Triangle.vert -o vert.spv
+%VULKAN_SDK_LOCATION%\Bin\glslc.exe shader.vert -o vert.spv
 cd ../
 del output.txt
 

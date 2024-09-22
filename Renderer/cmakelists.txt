@@ -22,6 +22,14 @@ target_include_directories(${RENDERER_NAME} PRIVATE "${CMAKE_CURRENT_BINARY_DIR}
 
 # Shaders
 target_compile_definitions(${RENDERER_NAME} PRIVATE SHADERS_FOLDER=\"${CMAKE_CURRENT_BINARY_DIR}/Shaders\")
+
+# Profiling
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
+add_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC PROFILING=1)
+else()
+add_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC PROFILING=0)
+endif()
+
 # Dependencies setup
     # Vulkan
     include(VulkanSDK.cmake)

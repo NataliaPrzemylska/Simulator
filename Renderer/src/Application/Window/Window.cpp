@@ -1,6 +1,10 @@
 #include "Window.h"
 #include <iostream>
+#include "Application/Application.h"
 namespace Renderer {
+	void frameBufferResizeCallback(GLFWwindow* window, int width, int height) {
+		Application::Get()->m_Renderer.m_FrameBufferResize = true;
+	}
 	void Window::init()
 	{
 		glfwInit();
@@ -8,7 +12,7 @@ namespace Renderer {
 		//glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
 		m_NativeWindow = glfwCreateWindow(600, 600, "Simulator", nullptr, nullptr);
 		glfwSetWindowUserPointer(getNativeWindow(), this);
-		//glfwSetFramebufferSizeCallback(m_Window, frameBufferResizeCallback);
+		glfwSetFramebufferSizeCallback(m_NativeWindow, frameBufferResizeCallback);
 	}
 	void Window::cleanUp()
 	{

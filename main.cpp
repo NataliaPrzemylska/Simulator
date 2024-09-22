@@ -1,7 +1,7 @@
 #include "Application/Application.h"
 #include <iostream>
 #include <exception>
-
+#include "Bench.h"
 int main() {
 	try {
 		(*Renderer::Application::Get()).run();

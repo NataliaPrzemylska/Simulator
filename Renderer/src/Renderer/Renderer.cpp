@@ -2,6 +2,7 @@
 #include <iostream>
 #include <exception>
 #include <Application/Application.h>
+#include "Bench.h"
 namespace Renderer {
 // Setup
 	void Renderer::init()
@@ -9,10 +10,10 @@ namespace Renderer {
 		m_Device.init();
 		m_SwapChain.create();
 		createRenderPass();
-		m_GraphicsPipeline.init();
-		m_FrameManager.init();
 		m_SwapChain.createFrameBuffers();
-
+		m_GraphicsPipeline.init();
+		m_FrameManager.init(&m_ResourceManager);
+		m_ResourceManager.init();
 	}
 
 	void Renderer::createRenderPass()
@@ -66,8 +67,9 @@ namespace Renderer {
 	void Renderer::cleanUp()
 	{
 		m_FrameManager.cleanUp();
-		m_SwapChain.cleanUp();
+		m_ResourceManager.cleanUp();
 		m_GraphicsPipeline.cleanUp();
+		m_SwapChain.cleanUp();
 		m_Device.cleanUp();
 	}
 

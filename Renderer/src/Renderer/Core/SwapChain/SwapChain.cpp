@@ -126,7 +126,10 @@ namespace Renderer {
         uint32_t imageCount;
         vkGetSwapchainImagesKHR(device.m_LogicalDevice, m_NativeSwapChain, &imageCount, nullptr);
         m_SwapChainImages.resize(imageCount);
-        vkGetSwapchainImagesKHR(device.m_LogicalDevice, m_NativeSwapChain, &imageCount, m_SwapChainImages.data());
+        if (vkGetSwapchainImagesKHR(device.m_LogicalDevice, m_NativeSwapChain, &imageCount, m_SwapChainImages.data()) != VK_SUCCESS)
+        {
+            throw std::runtime_error("failed to get swap chain images! :(");
+        }
         
         // Creating swapchain imageViews
         m_SwapChainImageViews.resize(m_SwapChainImages.size());
@@ -167,9 +170,17 @@ namespace Renderer {
 
     void SwapChain::recreate()
     {
+        PROFILE_FUNCTION();
+        int width = 0, height = 0;
+        glfwGetFramebufferSize(Application::Get()->getGLFWwindow(), &width, &height);
+        while (width == 0 || height == 0) {
+            glfwGetFramebufferSize(Application::Get()->getGLFWwindow(), &width, &height);
+            glfwWaitEvents();
+        }
         vkDeviceWaitIdle(Application::Get()->getNativeDevice());
         cleanUp(); 
         create();
+        createFrameBuffers();
     }
 
     void SwapChain::createFrameBuffers()
