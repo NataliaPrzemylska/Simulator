@@ -17,9 +17,12 @@ namespace Renderer {
 	class ResourceManager
 	{
 	public:
-		Buffer createVertexBuffer(VkDeviceSize size);
+		// General usage
+		Buffer createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties);
 		void DestroyBuffer(Buffer buffer);
-		void copyBuffer(Buffer buffer, void* data);
+		void LoadModel(const char* path);
+
+		void copyDataToBuffer(Buffer buffer, void* data);
 		std::vector<VkBuffer> getVertexBuffers() { return { m_VertexBuffer.m_Buffer.m_Buffer }; };
 		uint32_t getVerticesCount() { return m_VertexBuffer.m_Vertices.size(); }
 	public:

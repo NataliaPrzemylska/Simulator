@@ -14,8 +14,10 @@ namespace Renderer {
 		void init();
 		void cleanUp();
 		void drawFrame();
+
 		VkDevice& GetNativeDevice() { return m_Device.getNativeDevice(); };
 		Device& GetDevice() { return m_Device; };
+		ResourceManager& GetResourceManager() { return m_ResourceManager; }
 	public:
 		VkRenderPass m_RenderPass;
 		bool m_FrameBufferResize = false;

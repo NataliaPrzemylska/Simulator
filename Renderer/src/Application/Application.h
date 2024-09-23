@@ -7,19 +7,21 @@
 namespace Renderer {
 	class Application
 	{
-		
 	public:
 		static std::shared_ptr<Application> Get();
+	private:
+		static std::shared_ptr<Application> ApplicationInstance;
+		
+	public:
 		void run();
-		GLFWwindow* getGLFWwindow() { return m_Window.getNativeWindow(); };
-		Renderer m_Renderer;
 	private:
 		void mainLoop();
 	private:
 		Window m_Window;
-	private:
-		static std::shared_ptr<Application> ApplicationInstance;
+	public:
+		Renderer m_Renderer;
 	public: // Getters
+		GLFWwindow* getGLFWwindow() { return m_Window.getNativeWindow(); };
 		ResourceManager& getResourceManager() { return m_Renderer.m_ResourceManager; }
 		Renderer& getRenderer() { return m_Renderer; }
 		VkDevice& getNativeDevice() { return m_Renderer.GetNativeDevice(); };

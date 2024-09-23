@@ -9,8 +9,15 @@ void Renderer::VertexBuffer::createBuffer()
 			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
 			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
 		};
-	m_Buffer = Application::Get()->getResourceManager().createVertexBuffer(sizeof(m_Vertices[0]) * m_Vertices.size());
-	Application::Get()->getResourceManager().copyBuffer(m_Buffer, (void*)m_Vertices.data());
+	Buffer stagingBuffer = Application::Get()->getResourceManager().createBuffer(sizeof(Vertex) * m_Vertices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	Application::Get()->getResourceManager().copyDataToBuffer(stagingBuffer, m_Vertices.data())
+	void* data;
+	vkMapMemory(Application::Get()->getNativeDevice(), stagingBuffer.m_Memory, 0, stagingBuffer.m_Size, 0, &data);
+	memcpy(data, m_Vertices.data(), (size_t)stagingBuffer.m_Size);
+	vkUnmapMemory(Application::Get()->getNativeDevice(), stagingBuffer.m_Memory);
+
+	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
+
 }
 void Renderer::VertexBuffer::destroyBuffer()
 {
@@ -33,13 +40,13 @@ uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 }
 
 // General usage functions
-Renderer::Buffer Renderer::ResourceManager::createVertexBuffer(VkDeviceSize size)
+Renderer::Buffer Renderer::ResourceManager::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
 {
 	// Buffer creation
 	VkBufferCreateInfo bufferInfo{};
 	bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 	bufferInfo.size = size;
-	bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 	Buffer vertexBuffer;
 	if (vkCreateBuffer(Application::Get()->getNativeDevice(), &bufferInfo, nullptr, &vertexBuffer.m_Buffer) != VK_SUCCESS) {
@@ -55,23 +62,28 @@ Renderer::Buffer Renderer::ResourceManager::createVertexBuffer(VkDeviceSize size
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
-	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
 	if (vkAllocateMemory(Application::Get()->getNativeDevice(), &allocInfo, nullptr, &vertexBuffer.m_Memory) != VK_SUCCESS) {
 		throw std::runtime_error("failed to allocate vertex buffer memory!");
 	}
 
 	// Memory binding
 	vkBindBufferMemory(Application::Get()->getNativeDevice(), vertexBuffer.m_Buffer, vertexBuffer.m_Memory, 0);
+
 	return vertexBuffer;
 }
-
-
 void Renderer::ResourceManager::DestroyBuffer(Buffer buffer)
 {
 	vkDestroyBuffer(Application::Get()->getNativeDevice(), buffer.m_Buffer, nullptr);
 	vkFreeMemory(Application::Get()->getNativeDevice(), buffer.m_Memory, nullptr);
 }
-void Renderer::ResourceManager::copyBuffer(Buffer buffer, void* data)
+
+void Renderer::ResourceManager::LoadModel(const char* path)
+{
+	copyDataToBuffer(m_VertexBuffer.m_Buffer, (void*)m_VertexBuffer.m_Vertices.data());
+}
+
+void Renderer::ResourceManager::copyDataToBuffer(Buffer buffer, void* data)
 {
 	void* mappedData;
 	vkMapMemory(Application::Get()->getNativeDevice(), buffer.m_Memory, 0, buffer.m_Size, 0, &mappedData);
