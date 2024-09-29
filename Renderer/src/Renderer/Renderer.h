@@ -13,11 +13,13 @@ namespace Renderer {
 	public:
 		void init();
 		void cleanUp();
-		void drawFrame();
+		void onRender();
+		void onImGuiRender();
 
 		VkDevice& GetNativeDevice() { return m_Device.getNativeDevice(); };
 		Device& GetDevice() { return m_Device; };
-		ResourceManager& GetResourceManager() { return m_ResourceManager; }
+		ResourceManager& GetResourceManager() { return m_ResourceManager; };
+		FrameManager& GeFrameManager() { return m_FrameManager; }
 	public:
 		VkRenderPass m_RenderPass;
 		bool m_FrameBufferResize = false;
@@ -29,6 +31,6 @@ namespace Renderer {
 		ResourceManager m_ResourceManager;
 	private:
 		void createRenderPass();
-
+		void initImGui();
 	};
 }

@@ -23,8 +23,8 @@ namespace Renderer {
 
 		uint32_t m_CurrentFrameInFlightIndex = 0; // in <0, MAX_FRAMES_IN_FLIGHT)
 		VkCommandBuffer m_CommandBuffers[MAX_FRAMES_IN_FLIGHT];
-	private:
 		VkCommandPool m_CommandPool;
+	private:
 		VkSemaphore m_ImageAvailableSemaphores[MAX_FRAMES_IN_FLIGHT];
 		VkSemaphore m_RenderFinishedSemaphores[MAX_FRAMES_IN_FLIGHT];
 		VkFence m_InFlightFences[MAX_FRAMES_IN_FLIGHT];

@@ -146,3 +146,14 @@ namespace Benchmark {
 #define BEGIN_SESSION(name, file)
 #define END_SESSION()
 #endif 
+#ifndef NDEBUG
+#define REN_ASSERT(x) \
+    do { \
+        if (!(x)) { \
+            fprintf(stderr, "Assertion failed: %s, file %s, line %d\n", #x, __FILE__, __LINE__); \
+            abort(); \
+        } \
+    } while (0)
+#else
+#define REN_ASSERT(x)
+#endif // !NDEBUG

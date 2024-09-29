@@ -3,6 +3,9 @@
 #include <exception>
 #include <Application/Application.h>
 #include "Bench.h"
+#include "imgui.h"
+#include "imgui_impl_glfw.h"
+#include "imgui_impl_vulkan.h"
 namespace Renderer {
 // Setup
 	void Renderer::init()
@@ -14,6 +17,7 @@ namespace Renderer {
 		m_GraphicsPipeline.init();
 		m_FrameManager.init(&m_ResourceManager);
 		m_ResourceManager.init();
+		//initImGui();
 	}
 
 	void Renderer::createRenderPass()
@@ -63,6 +67,49 @@ namespace Renderer {
 		}
 	}
 
+	// ImGui Helper
+	static void check_vk_result(VkResult err)
+	{
+		if (err == 0)
+			return;
+		fprintf(stderr, "[vulkan] Error: VkResult = %d\n", err);
+		if (err < 0)
+			abort();
+	}
+
+	void Renderer::initImGui()
+	{
+		IMGUI_CHECKVERSION();
+		ImGui::CreateContext();
+		ImGuiIO& io = ImGui::GetIO(); (void)io;
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+		// Setup Dear ImGui style
+		ImGui::StyleColorsDark();
+		//ImGui::StyleColorsLight();
+
+		// Setup Platform/Renderer backends
+		ImGui_ImplGlfw_InitForVulkan(Application::Get()->getGLFWwindow(), true);
+		ImGui_ImplVulkan_InitInfo init_info = {};
+		init_info.Instance = m_Device.m_VulkanInstance;
+		init_info.PhysicalDevice = m_Device.m_PhysicalDevice;
+		init_info.Device = m_Device.m_LogicalDevice;	
+		init_info.QueueFamily = m_Device.m_GraphicsQueue.m_QueueFamilyIndices.graphicsFamily.value();
+		init_info.Queue = *m_Device.m_GraphicsQueue.m_VulkanQueue.get();
+		init_info.PipelineCache = VK_NULL_HANDLE;
+		init_info.DescriptorPool = VK_NULL_HANDLE;
+		init_info.RenderPass = m_RenderPass;
+		init_info.Subpass = 0;
+		init_info.MinImageCount = 2;
+		init_info.ImageCount = MAX_FRAMES_IN_FLIGHT;
+		init_info.MSAASamples = VK_SAMPLE_COUNT_1_BIT;
+		init_info.Allocator = nullptr;
+		init_info.CheckVkResultFn = check_vk_result;
+		ImGui_ImplVulkan_Init(&init_info);
+
+	}
+
 // Clenup
 	void Renderer::cleanUp()
 	{
@@ -74,9 +121,13 @@ namespace Renderer {
 	}
 
 // Basic functions
-	void Renderer::drawFrame()
+	void Renderer::onRender()
 	{
 		m_FrameManager.drawFrame();
+	}
+
+	void Renderer::onImGuiRender()
+	{
 	}
 
 }

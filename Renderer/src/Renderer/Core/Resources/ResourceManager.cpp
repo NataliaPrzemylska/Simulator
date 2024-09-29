@@ -1,14 +1,15 @@
-#include "ResourceManager.h"
 #include <iostream>
 #include "Application/Application.h"
+#include "ResourceManager.h"
 
+std::vector<Renderer::Vertex> Renderer::Vertices = {
+	{{0.0f, -0.5f}, { 1.0f, 0.0f, 0.0f }},
+	{ {0.5f, 0.5f}, {0.0f, 1.0f, 0.0f} },
+	{ {-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f} }
+};
+/*
 void Renderer::VertexBuffer::createBuffer()
 {
-	m_Vertices = {
-			{{0.0f, -0.5f}, {1.0f, 0.0f, 0.0f}},
-			{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
-			{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}}
-		};
 	Buffer stagingBuffer = Application::Get()->getResourceManager().createBuffer(sizeof(Vertex) * m_Vertices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	Application::Get()->getResourceManager().copyDataToBuffer(stagingBuffer, m_Vertices.data())
 	void* data;
@@ -18,12 +19,7 @@ void Renderer::VertexBuffer::createBuffer()
 
 	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
 
-}
-void Renderer::VertexBuffer::destroyBuffer()
-{
-	Application::Get()->getResourceManager().DestroyBuffer(m_Buffer);
-}
-
+}*/
 
 // Helper
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
@@ -80,7 +76,11 @@ void Renderer::ResourceManager::DestroyBuffer(Buffer buffer)
 
 void Renderer::ResourceManager::LoadModel(const char* path)
 {
-	copyDataToBuffer(m_VertexBuffer.m_Buffer, (void*)m_VertexBuffer.m_Vertices.data());
+	//DestroyBuffer(m_VertexBuffer.m_Buffer);
+	//m_VertexBuffer.m_Buffer = createBuffer(Vertices.size()*sizeof(Vertex), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	copyDataToBuffer(m_VertexBuffer.m_Buffer, (void*)Vertices.data());
+	m_VertexBuffer.m_VerticesCount = Vertices.size();
+	m_ModelLoaded = true;
 }
 
 void Renderer::ResourceManager::copyDataToBuffer(Buffer buffer, void* data)
@@ -96,11 +96,11 @@ void Renderer::ResourceManager::copyDataToBuffer(Buffer buffer, void* data)
 // Initialization and cleanup
 void Renderer::ResourceManager::init()
 {
-	m_VertexBuffer.createBuffer();
+	m_VertexBuffer.m_Buffer = createBuffer(Vertices.size() * sizeof(Vertex), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 }
 
 void Renderer::ResourceManager::cleanUp()
 {
-	m_VertexBuffer.destroyBuffer();
+	DestroyBuffer(m_VertexBuffer.m_Buffer);
 }
 
