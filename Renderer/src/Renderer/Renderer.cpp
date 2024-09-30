@@ -11,13 +11,25 @@ namespace Renderer {
 	void Renderer::init()
 	{
 		m_Device.init();
+		initCommandPool();
 		m_SwapChain.create();
 		createRenderPass();
 		m_SwapChain.createFrameBuffers();
+		m_ResourceManager.init();
 		m_GraphicsPipeline.init();
 		m_FrameManager.init(&m_ResourceManager);
-		m_ResourceManager.init();
 		//initImGui();
+	}
+
+	void Renderer::initCommandPool()
+	{
+		VkCommandPoolCreateInfo poolInfo{};
+		poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+		poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+		poolInfo.queueFamilyIndex = Application::Get()->getDevice().m_GraphicsQueue.m_QueueFamilyIndices.graphicsFamily.value();
+		if (vkCreateCommandPool(Application::Get()->getNativeDevice(), &poolInfo, nullptr, &m_PoolForOneTimeOperations) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create command pool! :(");
+		}
 	}
 
 	void Renderer::createRenderPass()
@@ -82,12 +94,10 @@ namespace Renderer {
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;
+		io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;
 
-		// Setup Dear ImGui style
 		ImGui::StyleColorsDark();
-		//ImGui::StyleColorsLight();
 
 		// Setup Platform/Renderer backends
 		ImGui_ImplGlfw_InitForVulkan(Application::Get()->getGLFWwindow(), true);
@@ -113,6 +123,7 @@ namespace Renderer {
 // Clenup
 	void Renderer::cleanUp()
 	{
+		vkDestroyCommandPool(Application::Get()->getNativeDevice(), m_PoolForOneTimeOperations, nullptr);
 		m_FrameManager.cleanUp();
 		m_ResourceManager.cleanUp();
 		m_GraphicsPipeline.cleanUp();
@@ -130,4 +141,31 @@ namespace Renderer {
 	{
 	}
 
+
+	// Command buffers
+	VkCommandBuffer Renderer::BeginOneTimeOperationBuffer()
+	{
+		VkCommandBufferAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandPool = m_PoolForOneTimeOperations;
+		allocInfo.commandBufferCount = 1;
+
+		VkCommandBuffer commandBuffer;
+		vkAllocateCommandBuffers(Application::Get()->getNativeDevice(), &allocInfo, &commandBuffer);
+
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+		return commandBuffer;
+	}
+
+	void Renderer::EndAndSubmitOneTimeOperationBuffer(VkCommandBuffer& cb)
+	{
+		vkEndCommandBuffer(cb);
+		Application::Get()->getDevice().m_GraphicsQueue.submitToQueue(cb);
+		vkFreeCommandBuffers(Application::Get()->getNativeDevice(), m_PoolForOneTimeOperations, 1, &cb);
+	}
 }

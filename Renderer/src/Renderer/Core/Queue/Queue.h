@@ -46,6 +46,8 @@ namespace Renderer {
 	public:
 		Queue() = default;
 		~Queue() = default;
+
+		void submitToQueue(VkCommandBuffer& commandBuffer);
 		std::shared_ptr <VkQueue> GetNativeQueue() { return m_VulkanQueue; }
 	private:
 		std::shared_ptr<VkQueue> m_VulkanQueue = std::make_shared<VkQueue>();

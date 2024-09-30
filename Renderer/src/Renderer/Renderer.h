@@ -21,15 +21,20 @@ namespace Renderer {
 		ResourceManager& GetResourceManager() { return m_ResourceManager; };
 		FrameManager& GeFrameManager() { return m_FrameManager; }
 	public:
-		VkRenderPass m_RenderPass;
 		bool m_FrameBufferResize = false;
+		VkRenderPass m_RenderPass;
 	private:
 		Device m_Device;
 		SwapChain m_SwapChain;
 		GraphicsPipeline m_GraphicsPipeline;
 		FrameManager m_FrameManager;
 		ResourceManager m_ResourceManager;
+		VkCommandPool m_PoolForOneTimeOperations;
+	public:
+		VkCommandBuffer BeginOneTimeOperationBuffer(); // Graphics queue family
+		void EndAndSubmitOneTimeOperationBuffer(VkCommandBuffer& cb); // Submit to graphics queue
 	private:
+		void initCommandPool();
 		void createRenderPass();
 		void initImGui();
 	};

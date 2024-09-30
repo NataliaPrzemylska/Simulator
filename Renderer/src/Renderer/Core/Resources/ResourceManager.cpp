@@ -3,23 +3,14 @@
 #include "ResourceManager.h"
 
 std::vector<Renderer::Vertex> Renderer::Vertices = {
-	{{0.0f, -0.5f}, { 1.0f, 0.0f, 0.0f }},
-	{ {0.5f, 0.5f}, {0.0f, 1.0f, 0.0f} },
-	{ {-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f} }
+	{{-0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+	{{0.5f, -0.5f}, {0.0f, 1.0f, 0.0f}},
+	{{0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+	{{-0.5f, 0.5f}, {1.0f, 1.0f, 1.0f}}
 };
-/*
-void Renderer::VertexBuffer::createBuffer()
-{
-	Buffer stagingBuffer = Application::Get()->getResourceManager().createBuffer(sizeof(Vertex) * m_Vertices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	Application::Get()->getResourceManager().copyDataToBuffer(stagingBuffer, m_Vertices.data())
-	void* data;
-	vkMapMemory(Application::Get()->getNativeDevice(), stagingBuffer.m_Memory, 0, stagingBuffer.m_Size, 0, &data);
-	memcpy(data, m_Vertices.data(), (size_t)stagingBuffer.m_Size);
-	vkUnmapMemory(Application::Get()->getNativeDevice(), stagingBuffer.m_Memory);
-
-	createBuffer(bufferSize, VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, vertexBuffer, vertexBufferMemory);
-
-}*/
+std::vector<uint16_t> Renderer::Indices = {
+	0, 1, 2, 2, 3, 0
+};
 
 // Helper
 uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
@@ -36,7 +27,7 @@ uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 }
 
 // General usage functions
-Renderer::Buffer Renderer::ResourceManager::createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties)
+Renderer::Buffer Renderer::ResourceManager::createBuffer(const VkDeviceSize& size, const VkBufferUsageFlags& usage, const VkMemoryPropertyFlags& properties)
 {
 	// Buffer creation
 	VkBufferCreateInfo bufferInfo{};
@@ -68,7 +59,8 @@ Renderer::Buffer Renderer::ResourceManager::createBuffer(VkDeviceSize size, VkBu
 
 	return vertexBuffer;
 }
-void Renderer::ResourceManager::DestroyBuffer(Buffer buffer)
+
+void Renderer::ResourceManager::DestroyBuffer(Buffer& buffer)
 {
 	vkDestroyBuffer(Application::Get()->getNativeDevice(), buffer.m_Buffer, nullptr);
 	vkFreeMemory(Application::Get()->getNativeDevice(), buffer.m_Memory, nullptr);
@@ -78,12 +70,23 @@ void Renderer::ResourceManager::LoadModel(const char* path)
 {
 	//DestroyBuffer(m_VertexBuffer.m_Buffer);
 	//m_VertexBuffer.m_Buffer = createBuffer(Vertices.size()*sizeof(Vertex), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	copyDataToBuffer(m_VertexBuffer.m_Buffer, (void*)Vertices.data());
+	Buffer stagingBuffer = createBuffer(Vertices.size() * sizeof(Vertex), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	copyDataToBuffer(stagingBuffer, (void*)Vertices.data());
+	copyBuffer(stagingBuffer, m_VertexBuffer.m_Buffer, Vertices.size() * sizeof(Vertex));
+	DestroyBuffer(stagingBuffer);
+
+
+	Buffer stagingBufferIndex = createBuffer(Indices.size() * sizeof(Indices[0]), VK_BUFFER_USAGE_TRANSFER_SRC_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	copyDataToBuffer(stagingBufferIndex, (void*)Indices.data());
+	copyBuffer(stagingBufferIndex, m_IndexBuffer, Indices.size() * sizeof(Indices[0]));
+	DestroyBuffer(stagingBufferIndex);
+
+	m_IndicesCount = Indices.size();
 	m_VertexBuffer.m_VerticesCount = Vertices.size();
 	m_ModelLoaded = true;
 }
 
-void Renderer::ResourceManager::copyDataToBuffer(Buffer buffer, void* data)
+void Renderer::ResourceManager::copyDataToBuffer(Buffer& buffer, void* data)
 {
 	void* mappedData;
 	vkMapMemory(Application::Get()->getNativeDevice(), buffer.m_Memory, 0, buffer.m_Size, 0, &mappedData);
@@ -92,15 +95,34 @@ void Renderer::ResourceManager::copyDataToBuffer(Buffer buffer, void* data)
 
 }
 
+void Renderer::ResourceManager::copyBuffer(Buffer& srcBuffer, Buffer& destBuffer, VkDeviceSize size)
+{
+	VkCommandBuffer commandBuffer = Application::Get()->getRenderer().BeginOneTimeOperationBuffer();
+
+	VkBufferCopy copyRegion{};
+	copyRegion.srcOffset = 0;
+	copyRegion.dstOffset = 0;
+	copyRegion.size = size;
+	vkCmdCopyBuffer(commandBuffer, srcBuffer.m_Buffer, destBuffer.m_Buffer, 1, &copyRegion);
+
+	Application::Get()->getRenderer().EndAndSubmitOneTimeOperationBuffer(commandBuffer);
+}
+
 
 // Initialization and cleanup
 void Renderer::ResourceManager::init()
 {
-	m_VertexBuffer.m_Buffer = createBuffer(Vertices.size() * sizeof(Vertex), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	m_DescriptorManager.init();
+	m_VertexBuffer.m_Buffer = createBuffer(Vertices.size() * sizeof(Vertex), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	m_IndexBuffer = createBuffer(Indices.size() * sizeof(Indices[0]), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	LoadModel("just test");
+
 }
 
 void Renderer::ResourceManager::cleanUp()
 {
+	m_DescriptorManager.cleanUp();
 	DestroyBuffer(m_VertexBuffer.m_Buffer);
+	DestroyBuffer(m_IndexBuffer);
 }
 

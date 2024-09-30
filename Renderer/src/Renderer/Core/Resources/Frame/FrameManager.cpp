@@ -136,6 +136,7 @@ void Renderer::FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	std::vector<VkBuffer> vertexBuffers =  m_ResourceManagerRef->getVertexBuffers();
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers.data(), offsets);
+	vkCmdBindIndexBuffer(commandBuffer, m_ResourceManagerRef->getIndexBuffer(), 0, VK_INDEX_TYPE_UINT16);
 
 
 	VkViewport viewport{};
@@ -152,7 +153,7 @@ void Renderer::FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
 
-	vkCmdDraw(commandBuffer, m_ResourceManagerRef->getVerticesCount(), 1, 0, 0);
+	vkCmdDrawIndexed(commandBuffer, m_ResourceManagerRef->getIndicesCount(), 1, 0, 0, 0);
 	vkCmdEndRenderPass(commandBuffer);
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer! :(");

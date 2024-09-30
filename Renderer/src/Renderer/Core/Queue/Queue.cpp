@@ -134,4 +134,15 @@ namespace Renderer {
         return priorities;
     }
 
+    void Queue::submitToQueue(VkCommandBuffer& commandBuffer)
+    {
+        VkSubmitInfo submitInfo{};
+        submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+        submitInfo.commandBufferCount = 1;
+        submitInfo.pCommandBuffers = &commandBuffer;
+
+        vkQueueSubmit(*m_VulkanQueue, 1, &submitInfo, VK_NULL_HANDLE);
+        vkQueueWaitIdle(*m_VulkanQueue);
+    }
+
 }
