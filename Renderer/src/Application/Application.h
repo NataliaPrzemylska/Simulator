@@ -11,7 +11,6 @@ namespace Renderer {
 		static std::shared_ptr<Application> Get();
 	private:
 		static std::shared_ptr<Application> ApplicationInstance;
-		
 	public:
 		void run();
 	private:

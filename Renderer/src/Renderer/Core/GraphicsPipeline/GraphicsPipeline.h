@@ -12,6 +12,7 @@ namespace Renderer {
 		void init();
 		void cleanUp();
 		VkPipeline& getNativePipeline() { return m_NativePipeline; };
+		VkPipelineLayout& getPipelineLayout() { return m_PipelineLayout; }
 	private:
 		VkPipeline m_NativePipeline;
 		VkPipelineLayout m_PipelineLayout;

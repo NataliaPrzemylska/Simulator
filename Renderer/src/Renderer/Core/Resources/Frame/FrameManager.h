@@ -6,9 +6,8 @@
 #include <GLFW/glfw3.h>
 #endif
 #include "Renderer/info.h"
-#include "Renderer/Core/Resources/ResourceManager.h"
 namespace Renderer {
-
+	class ResourceManager;
 	class FrameManager
 	{
 	friend class Renderer;

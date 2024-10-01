@@ -35,29 +35,29 @@ Renderer::Buffer Renderer::ResourceManager::createBuffer(const VkDeviceSize& siz
 	bufferInfo.size = size;
 	bufferInfo.usage = usage;
 	bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-	Buffer vertexBuffer;
-	if (vkCreateBuffer(Application::Get()->getNativeDevice(), &bufferInfo, nullptr, &vertexBuffer.m_Buffer) != VK_SUCCESS) {
-		throw std::runtime_error("failed to create vertex buffer!");
+	Buffer Buffer;
+	if (vkCreateBuffer(Application::Get()->getNativeDevice(), &bufferInfo, nullptr, &Buffer.m_Buffer) != VK_SUCCESS) {
+		throw std::runtime_error("failed to create buffer!");
 	}
-	vertexBuffer.m_Size = size;
+	Buffer.m_Size = size;
 
 	// Checking memory requirements
 	VkMemoryRequirements memRequirements;
-	vkGetBufferMemoryRequirements(Application::Get()->getNativeDevice(), vertexBuffer.m_Buffer, &memRequirements);
+	vkGetBufferMemoryRequirements(Application::Get()->getNativeDevice(), Buffer.m_Buffer, &memRequirements);
 
 	// Memory allocation
 	VkMemoryAllocateInfo allocInfo{};
 	allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 	allocInfo.allocationSize = memRequirements.size;
 	allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits, properties);
-	if (vkAllocateMemory(Application::Get()->getNativeDevice(), &allocInfo, nullptr, &vertexBuffer.m_Memory) != VK_SUCCESS) {
-		throw std::runtime_error("failed to allocate vertex buffer memory!");
+	if (vkAllocateMemory(Application::Get()->getNativeDevice(), &allocInfo, nullptr, &Buffer.m_Memory) != VK_SUCCESS) {
+		throw std::runtime_error("failed to allocate buffer memory!");
 	}
 
 	// Memory binding
-	vkBindBufferMemory(Application::Get()->getNativeDevice(), vertexBuffer.m_Buffer, vertexBuffer.m_Memory, 0);
+	vkBindBufferMemory(Application::Get()->getNativeDevice(), Buffer.m_Buffer, Buffer.m_Memory, 0);
 
-	return vertexBuffer;
+	return Buffer;
 }
 
 void Renderer::ResourceManager::DestroyBuffer(Buffer& buffer)
@@ -112,7 +112,7 @@ void Renderer::ResourceManager::copyBuffer(Buffer& srcBuffer, Buffer& destBuffer
 // Initialization and cleanup
 void Renderer::ResourceManager::init()
 {
-	m_DescriptorManager.init();
+	m_DescriptorManager.init(this);
 	m_VertexBuffer.m_Buffer = createBuffer(Vertices.size() * sizeof(Vertex), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	m_IndexBuffer = createBuffer(Indices.size() * sizeof(Indices[0]), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	LoadModel("just test");

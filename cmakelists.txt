@@ -29,5 +29,6 @@ set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
 add_subdirectory(Renderer)
 add_dependencies(${CMAKE_PROJECT_NAME} ${RENDERER_NAME})
 target_link_libraries(${CMAKE_PROJECT_NAME} PRIVATE ${RENDERER_NAME})
+target_compile_definitions(${CMAKE_PROJECT_NAME} PUBLIC TEXTURES_FOLDER_PATH=\"${CMAKE_BINARY_DIR}/Scenes/Textures\")
 
 set_property(DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR} PROPERTY VS_STARTUP_PROJECT ${CMAKE_PROJECT_NAME})

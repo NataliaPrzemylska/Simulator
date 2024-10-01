@@ -17,7 +17,7 @@ namespace Renderer {
 		m_SwapChain.createFrameBuffers();
 		m_ResourceManager.init();
 		m_GraphicsPipeline.init();
-		m_FrameManager.init(&m_ResourceManager);
+		m_ResourceManager.m_FrameManager.init(&m_ResourceManager);
 		//initImGui();
 	}
 
@@ -124,7 +124,7 @@ namespace Renderer {
 	void Renderer::cleanUp()
 	{
 		vkDestroyCommandPool(Application::Get()->getNativeDevice(), m_PoolForOneTimeOperations, nullptr);
-		m_FrameManager.cleanUp();
+		m_ResourceManager.m_FrameManager.cleanUp();
 		m_ResourceManager.cleanUp();
 		m_GraphicsPipeline.cleanUp();
 		m_SwapChain.cleanUp();
@@ -134,7 +134,7 @@ namespace Renderer {
 // Basic functions
 	void Renderer::onRender()
 	{
-		m_FrameManager.drawFrame();
+		m_ResourceManager.m_FrameManager.drawFrame();
 	}
 
 	void Renderer::onImGuiRender()

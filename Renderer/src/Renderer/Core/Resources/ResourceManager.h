@@ -2,14 +2,12 @@
 #include <vector>
 #include "Vertex/Vertex.h"
 #include "Descriptors/DescriptorsManager.h"
+#include "Frame/FrameManager.h"
+#include "Buffer.h"
 namespace Renderer {
 	extern std::vector<Vertex> Vertices;
 	extern std::vector<uint16_t> Indices;
-	struct Buffer {
-		size_t m_Size;
-		VkBuffer m_Buffer;
-		VkDeviceMemory m_Memory;
-	};
+	
 	struct VertexBuffer {
 	public:
 		size_t m_VerticesCount;
@@ -29,17 +27,20 @@ namespace Renderer {
 		VkBuffer getIndexBuffer() { return m_IndexBuffer.m_Buffer; };
 		size_t getVerticesCount() { return m_VertexBuffer.m_VerticesCount; }
 		size_t getIndicesCount() { return  m_IndicesCount; }
+		VkDescriptorSetLayout& getDescriptorSetLayout() { return m_DescriptorManager.getDescriptorSetLayout(); }
+		std::vector<VkDescriptorSet>& getDescriptorSets() { return m_DescriptorManager.m_DescriptorSets; }
 	public:
 		void init();
 		void cleanUp();
 	public:
 		bool m_ModelLoaded = false;
 		size_t m_IndicesCount = 0;
+		DescriptorsManager m_DescriptorManager;
+		FrameManager m_FrameManager;
 	private:
 		VertexBuffer m_VertexBuffer;
 		Buffer m_IndexBuffer;
 	private:
-		DescriptorsManager m_DescriptorManager;
 
 	};
 }

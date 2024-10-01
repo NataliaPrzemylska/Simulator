@@ -64,6 +64,7 @@ void Renderer::FrameManager::drawFrame()
 		}
 		vkResetFences(Application::Get()->getNativeDevice(), 1, &m_InFlightFences[m_CurrentFrameInFlightIndex]);
 	}
+	m_ResourceManagerRef->m_DescriptorManager.updateUniformBuffer(m_CurrentFrameInFlightIndex);
 	{
 		PROFILE_SCOPE("CommandBuffer record");
 		vkResetCommandBuffer(m_CommandBuffers[m_CurrentFrameInFlightIndex], 0);
@@ -151,7 +152,7 @@ void Renderer::FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	scissor.offset = { 0, 0 };
 	scissor.extent = (Application::Get()->m_Renderer.m_SwapChain).m_Extent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
-
+	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Application::Get()->getRenderer().m_GraphicsPipeline.getPipelineLayout(), 0, 1, &m_ResourceManagerRef->getDescriptorSets()[m_CurrentFrameInFlightIndex], 0, nullptr);
 
 	vkCmdDrawIndexed(commandBuffer, m_ResourceManagerRef->getIndicesCount(), 1, 0, 0, 0);
 	vkCmdEndRenderPass(commandBuffer);
