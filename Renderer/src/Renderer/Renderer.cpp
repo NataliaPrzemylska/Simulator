@@ -141,9 +141,15 @@ namespace Renderer {
 	{
 	}
 
+	void Renderer::loadScene(Scene& scene)
+	{
+		m_CurrentScene = scene;
+
+	}
+
 
 	// Command buffers
-	VkCommandBuffer Renderer::BeginOneTimeOperationBuffer()
+	VkCommandBuffer Renderer::BeginSingleTimeCommands()
 	{
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
@@ -162,7 +168,7 @@ namespace Renderer {
 		return commandBuffer;
 	}
 
-	void Renderer::EndAndSubmitOneTimeOperationBuffer(VkCommandBuffer& cb)
+	void Renderer::EndSingleTimeCommands(VkCommandBuffer& cb)
 	{
 		vkEndCommandBuffer(cb);
 		Application::Get()->getDevice().m_GraphicsQueue.submitToQueue(cb);

@@ -4,6 +4,7 @@
 #include "Window/Window.h"
 #include <memory>
 #include "Bench.h"
+#include "Scene/Scene.h"
 namespace Renderer {
 	class Application
 	{
@@ -19,6 +20,7 @@ namespace Renderer {
 		Window m_Window;
 	public:
 		Renderer m_Renderer;
+		Scene m_Scene;
 	public: // Getters
 		GLFWwindow* getGLFWwindow() { return m_Window.getNativeWindow(); };
 		ResourceManager& getResourceManager() { return m_Renderer.m_ResourceManager; }

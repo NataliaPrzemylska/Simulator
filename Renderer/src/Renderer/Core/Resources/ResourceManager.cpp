@@ -13,9 +13,9 @@ std::vector<uint16_t> Renderer::Indices = {
 };
 
 // Helper
-uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
+uint32_t Renderer::findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) {
 	VkPhysicalDeviceMemoryProperties memProperties;
-	vkGetPhysicalDeviceMemoryProperties(Renderer::Application::Get()->getDevice().m_PhysicalDevice, &memProperties);
+	vkGetPhysicalDeviceMemoryProperties(Application::Get()->getDevice().m_PhysicalDevice, &memProperties);
 	for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++) {
 		if (typeFilter & (1 << i) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties) {
 			return i;
@@ -86,6 +86,11 @@ void Renderer::ResourceManager::LoadModel(const char* path)
 	m_ModelLoaded = true;
 }
 
+void Renderer::ResourceManager::LoadTexture(const char* path, ImageUsage usage)
+{
+	m_TextureManager.LoadTexture(path);
+}
+
 void Renderer::ResourceManager::copyDataToBuffer(Buffer& buffer, void* data)
 {
 	void* mappedData;
@@ -97,7 +102,7 @@ void Renderer::ResourceManager::copyDataToBuffer(Buffer& buffer, void* data)
 
 void Renderer::ResourceManager::copyBuffer(Buffer& srcBuffer, Buffer& destBuffer, VkDeviceSize size)
 {
-	VkCommandBuffer commandBuffer = Application::Get()->getRenderer().BeginOneTimeOperationBuffer();
+	VkCommandBuffer commandBuffer = Application::Get()->getRenderer().BeginSingleTimeCommands();
 
 	VkBufferCopy copyRegion{};
 	copyRegion.srcOffset = 0;
@@ -105,7 +110,7 @@ void Renderer::ResourceManager::copyBuffer(Buffer& srcBuffer, Buffer& destBuffer
 	copyRegion.size = size;
 	vkCmdCopyBuffer(commandBuffer, srcBuffer.m_Buffer, destBuffer.m_Buffer, 1, &copyRegion);
 
-	Application::Get()->getRenderer().EndAndSubmitOneTimeOperationBuffer(commandBuffer);
+	Application::Get()->getRenderer().EndSingleTimeCommands(commandBuffer);
 }
 
 
@@ -116,11 +121,13 @@ void Renderer::ResourceManager::init()
 	m_VertexBuffer.m_Buffer = createBuffer(Vertices.size() * sizeof(Vertex), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	m_IndexBuffer = createBuffer(Indices.size() * sizeof(Indices[0]), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	LoadModel("just test");
+	m_TextureManager.init();
 
 }
 
 void Renderer::ResourceManager::cleanUp()
 {
+	m_TextureManager.cleanUp();
 	m_DescriptorManager.cleanUp();
 	DestroyBuffer(m_VertexBuffer.m_Buffer);
 	DestroyBuffer(m_IndexBuffer);

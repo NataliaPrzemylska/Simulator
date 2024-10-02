@@ -9,15 +9,17 @@
 #endif // !RENDERER_INCLUDE_GLFW_VULKAN
 
 namespace Renderer {
+	class TextureManager;
 	class Texture
 	{
 	public:
-		VkImage textureImage;
-		VkDeviceMemory textureImageMemory;
+		void cleanUp();
+		VkImage m_TextureImage;
+		VkDeviceMemory m_TextureImageMemory;
 	public:
-		void LoadTexture(std::string& path);
-		void* loadTextureImage(std::string& path);
+		void LoadTexture(TextureManager* textureManager, const char* path);
+		uint32_t width;
+		uint32_t height;
 	private:
-
 	};
 }

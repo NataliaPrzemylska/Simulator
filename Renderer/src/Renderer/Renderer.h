@@ -3,6 +3,7 @@
 #include "Renderer/Core/SwapChain/SwapChain.h"
 #include "Renderer/Core/Resources/Frame/FrameManager.h"
 #include "Renderer/Core/Resources/ResourceManager.h"
+#include "Scene/Scene.h"
 namespace Renderer {
 	class SwapChain;
 	class Renderer {
@@ -15,6 +16,7 @@ namespace Renderer {
 		void cleanUp();
 		void onRender();
 		void onImGuiRender();
+		void loadScene(Scene& scene);
 
 		VkDevice& GetNativeDevice() { return m_Device.getNativeDevice(); };
 		Device& GetDevice() { return m_Device; };
@@ -24,6 +26,7 @@ namespace Renderer {
 	public:
 		bool m_FrameBufferResize = false;
 		VkRenderPass m_RenderPass;
+		Scene& m_CurrentScene;
 	private:
 		Device m_Device;
 		SwapChain m_SwapChain;
@@ -31,8 +34,8 @@ namespace Renderer {
 		ResourceManager m_ResourceManager;
 		VkCommandPool m_PoolForOneTimeOperations;
 	public:
-		VkCommandBuffer BeginOneTimeOperationBuffer(); // Graphics queue family
-		void EndAndSubmitOneTimeOperationBuffer(VkCommandBuffer& cb); // Submit to graphics queue
+		VkCommandBuffer BeginSingleTimeCommands(); // Graphics queue family
+		void EndSingleTimeCommands(VkCommandBuffer& cb); // Submit to graphics queue
 	private:
 		void initCommandPool();
 		void createRenderPass();
