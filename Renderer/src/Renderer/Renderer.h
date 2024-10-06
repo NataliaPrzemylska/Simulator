@@ -31,6 +31,7 @@ namespace Renderer {
 		void cleanUp();
 		void onRender();
 		void onImGuiRender();
+		void createImGuiRenderPass();
 
 		VkDevice& GetNativeDevice() { return m_Device.getNativeDevice(); };
 		Device& GetDevice() { return m_Device; };
@@ -40,6 +41,7 @@ namespace Renderer {
 	public:
 		bool m_FrameBufferResize = false;
 		VkRenderPass m_RenderPass;
+		VkRenderPass m_ImGuiRenderPass;
 		//ImGuiComponents m_ImGuiComponents;
 		VkDescriptorPool m_ImGuiDescriptorPool;
 	private:

@@ -91,7 +91,7 @@ namespace Renderer {
 
 	void Renderer::initImGui()
 	{
-
+		createImGuiRenderPass();
 		VkDescriptorPoolSize pool_sizes[] =
 		{
 			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
@@ -123,7 +123,7 @@ namespace Renderer {
 		init_info.Queue = *m_Device.m_GraphicsQueue.m_VulkanQueue.get();
 		init_info.PipelineCache = VK_NULL_HANDLE;
 		init_info.DescriptorPool = m_ImGuiDescriptorPool;
-		init_info.RenderPass = m_RenderPass;
+		init_info.RenderPass = m_ImGuiRenderPass;
 		init_info.Subpass = 0;
 		init_info.MinImageCount = 2;
 		init_info.ImageCount = MAX_FRAMES_IN_FLIGHT;
@@ -137,8 +137,10 @@ namespace Renderer {
 // Clenup
 	void Renderer::cleanUp()
 	{
+		vkDeviceWaitIdle(Application::Get()->getNativeDevice());
 		ImGui_ImplVulkan_Shutdown();
 		vkDestroyDescriptorPool(Application::Get()->getNativeDevice(), m_ImGuiDescriptorPool, nullptr);
+		vkDestroyRenderPass(Application::Get()->getNativeDevice(), m_ImGuiRenderPass, nullptr);
 		vkDestroyCommandPool(Application::Get()->getNativeDevice(), m_PoolForOneTimeOperations, nullptr);
 		m_ResourceManager.m_FrameManager.cleanUp();
 		m_ResourceManager.cleanUp();
@@ -163,6 +165,54 @@ namespace Renderer {
 		ImGui::Text("panel text");
 		ImGui::End();
 		ImGui::Render();
+	}
+
+	void Renderer::createImGuiRenderPass()
+	{
+
+
+		// Render pass utilties
+		VkAttachmentDescription colorAttachment{};
+		colorAttachment.format = m_SwapChain.m_ImageFormat;
+		colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
+		colorAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		colorAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		colorAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		colorAttachment.finalLayout = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+
+		VkAttachmentReference colorAttachmentRef{};
+		colorAttachmentRef.attachment = 0;
+		colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+
+		VkSubpassDependency dependency{};
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.srcAccessMask = 0;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		VkSubpassDescription subpass{};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = 1;
+		subpass.pColorAttachments = &colorAttachmentRef;
+
+		// Render pass
+		VkRenderPassCreateInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.attachmentCount = 1;
+		renderPassInfo.pAttachments = &colorAttachment;
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpass;
+		renderPassInfo.dependencyCount = 1;
+		renderPassInfo.pDependencies = &dependency;
+
+		if (vkCreateRenderPass(m_Device.m_LogicalDevice, &renderPassInfo, nullptr, &m_ImGuiRenderPass) != VK_SUCCESS) {
+			throw std::runtime_error("failed to create render pass!");
+		}
 	}
 
 

@@ -125,6 +125,8 @@ void Renderer::FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS) {
 		throw std::runtime_error("failed to begin recording command buffer!");
 	}
+
+	// Scene Render
 	VkRenderPassBeginInfo renderPassInfo{};
 	renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
 	renderPassInfo.renderPass = Application::Get()->getRenderer().m_RenderPass;
@@ -137,8 +139,6 @@ void Renderer::FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Application::Get()->m_Renderer.m_GraphicsPipeline.getNativePipeline());
 
-	ImDrawData* draw_data = ImGui::GetDrawData();
-	ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffer);
 
 	std::vector<VkBuffer> vertexBuffers =  m_ResourceManagerRef->getVertexBuffers();
 	VkDeviceSize offsets[] = { 0 };
@@ -162,7 +162,13 @@ void Renderer::FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 
 
 	vkCmdDrawIndexed(commandBuffer, m_ResourceManagerRef->getIndicesCount(), 1, 0, 0, 0);
+
+	// ImGui Render
+	ImGui_ImplVulkan_RenderDrawData(ImGui::GetDrawData(), commandBuffer);
+
 	vkCmdEndRenderPass(commandBuffer);
+
+
 	if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS) {
 		throw std::runtime_error("failed to record command buffer! :(");
 	}
