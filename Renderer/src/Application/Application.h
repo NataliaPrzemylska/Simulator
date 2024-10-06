@@ -4,7 +4,8 @@
 #include "Window/Window.h"
 #include <memory>
 #include "Bench.h"
-#include "Scene/Scene.h"
+#include "Renderer/Core/Camera/Camera.h"
+
 namespace Renderer {
 	class Application
 	{
@@ -20,12 +21,14 @@ namespace Renderer {
 		Window m_Window;
 	public:
 		Renderer m_Renderer;
-		Scene m_Scene;
+		Camera* m_Camera;
 	public: // Getters
 		GLFWwindow* getGLFWwindow() { return m_Window.getNativeWindow(); };
 		ResourceManager& getResourceManager() { return m_Renderer.m_ResourceManager; }
 		Renderer& getRenderer() { return m_Renderer; }
 		VkDevice& getNativeDevice() { return m_Renderer.GetNativeDevice(); };
 		Device& getDevice() { return m_Renderer.GetDevice(); };
+	public: // Setters
+		void setCamera(Camera* camera) { m_Camera = camera; };
 	};
 };

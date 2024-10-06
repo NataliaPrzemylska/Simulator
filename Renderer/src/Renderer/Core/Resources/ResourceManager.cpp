@@ -86,7 +86,7 @@ void Renderer::ResourceManager::LoadModel(const char* path)
 	m_ModelLoaded = true;
 }
 
-void Renderer::ResourceManager::LoadTexture(const char* path, ImageUsage usage)
+void Renderer::ResourceManager::LoadTexture(const char* path)
 {
 	m_TextureManager.LoadTexture(path);
 }

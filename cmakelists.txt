@@ -20,6 +20,14 @@ set(RENDERER_NAME Renderer)
 project(${CMAKE_PROJECT_NAME})
 add_executable(${CMAKE_PROJECT_NAME} main.cpp)
 
+# Source setup
+file(GLOB_RECURSE SIM_SOURCE 
+    "src/*.h"
+    "src/*.cpp"
+)
+target_sources(${CMAKE_PROJECT_NAME} PUBLIC ${SIM_SOURCE})
+target_include_directories(${CMAKE_PROJECT_NAME} PUBLIC "${CMAKE_BINARY_DIR}/src")
+
 set_target_properties(${CMAKE_PROJECT_NAME} PROPERTIES
     CXX_STANDARD 20
     CXX_STANDARD_REQUIRED YES

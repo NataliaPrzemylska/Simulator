@@ -2,6 +2,8 @@
 #include <iostream>
 #include "Renderer/Core/Device/Device.h"
 #include "Application/Application.h"
+#include <imgui.h>
+#include "imgui_impl_vulkan.h"
 
 void Renderer::FrameManager::init(ResourceManager* rm)
 {
@@ -134,6 +136,10 @@ void Renderer::FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	renderPassInfo.pClearValues = &clearColor;
 	vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Application::Get()->m_Renderer.m_GraphicsPipeline.getNativePipeline());
+
+	ImDrawData* draw_data = ImGui::GetDrawData();
+	ImGui_ImplVulkan_RenderDrawData(draw_data, commandBuffer);
+
 	std::vector<VkBuffer> vertexBuffers =  m_ResourceManagerRef->getVertexBuffers();
 	VkDeviceSize offsets[] = { 0 };
 	vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers.data(), offsets);
@@ -153,6 +159,7 @@ void Renderer::FrameManager::recordCommandBuffer(VkCommandBuffer commandBuffer, 
 	scissor.extent = (Application::Get()->m_Renderer.m_SwapChain).m_Extent;
 	vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 	vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, Application::Get()->getRenderer().m_GraphicsPipeline.getPipelineLayout(), 0, 1, &m_ResourceManagerRef->getDescriptorSets()[m_CurrentFrameInFlightIndex], 0, nullptr);
+
 
 	vkCmdDrawIndexed(commandBuffer, m_ResourceManagerRef->getIndicesCount(), 1, 0, 0, 0);
 	vkCmdEndRenderPass(commandBuffer);

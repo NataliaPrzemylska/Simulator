@@ -5,12 +5,15 @@
 #include <iostream>
 #include <exception>
 #include "Bench.h"
+#include "Camera/Camera.h"
 
 int main() {
 	try {
-		(*Renderer::Application::Get()).run();
+		std::shared_ptr<Scene::Camera> sceneCamera = std::make_shared<Scene::Camera>();
+		Renderer::Application::Get()->setCamera(sceneCamera.get());
+		Renderer::Application::Get()->run();
 	}
-	catch (std::runtime_error e) {
+	catch (std::runtime_error& e) {
 		std::cerr << "ERROR: " << e.what() << std::endl;
 		return EXIT_FAILURE;
 	}

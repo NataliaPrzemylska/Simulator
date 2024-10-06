@@ -28,10 +28,12 @@ namespace Renderer {
 		VkDescriptorSetLayout& getDescriptorSetLayout() { return m_DescriptorSetLayout; };
 		std::vector<Buffer> m_UniformBuffers;
 		std::vector<void*> m_UniformBuffersMemoryMapped;
+		VkDescriptorPool m_DescriptorPool;
 	private:
 		ResourceManager* m_ResourceManagerRef;
 		VkDescriptorSetLayout m_DescriptorSetLayout;
-		VkDescriptorPool m_DescriptorPool;
 		std::vector<VkDescriptorSet> m_DescriptorSets;
+	private:
+		glm::mat4 m_ModelMatrix;
 	};
 }

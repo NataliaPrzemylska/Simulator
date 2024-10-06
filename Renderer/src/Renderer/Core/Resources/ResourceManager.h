@@ -6,6 +6,7 @@
 #include "Images/TextureManager.h"
 #include "Buffer.h"
 #include "Scene/Scene.h"
+#include <glm/mat4x4.hpp>
 namespace Renderer {
 	extern std::vector<Vertex> Vertices;
 	extern std::vector<uint16_t> Indices;
@@ -23,7 +24,7 @@ namespace Renderer {
 		Buffer createBuffer(const VkDeviceSize& size, const VkBufferUsageFlags& usage, const VkMemoryPropertyFlags& properties);
 		void DestroyBuffer(Buffer& buffer);
 		void LoadModel(const char* path);
-		void LoadTexture(const char* path, ImageUsage usage);
+		void LoadTexture(const char* path);
 
 		void copyDataToBuffer(Buffer& buffer, void* data);
 		void copyBuffer(Buffer& srcBuffer, Buffer& destBuffer, VkDeviceSize size);
@@ -48,6 +49,5 @@ namespace Renderer {
 		VertexBuffer m_VertexBuffer;
 		Buffer m_IndexBuffer;
 	private:
-
 	};
 }

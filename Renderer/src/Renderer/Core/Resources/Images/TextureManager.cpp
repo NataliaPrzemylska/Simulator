@@ -3,18 +3,19 @@
 
 void Renderer::TextureManager::cleanUp()
 {
-	for (Texture* tex : m_Textures)
+	for (Texture tex : m_Textures)
 	{
-		tex->cleanUp();
-		delete tex;
+		tex.cleanUp();
 	}
+	m_Textures.clear();
 }
 
 void Renderer::TextureManager::LoadTexture(const char* path)
 {
-	Texture* newTexture = new Texture();
-	newTexture->LoadTexture(this, path);
-	m_Textures.push_back(newTexture);
+	Texture newTexture = Texture();
+	newTexture.LoadTexture(this, path);
+	m_Textures.resize(m_Textures.size() + 1);
+	m_Textures[m_Textures.size() - 1] = (newTexture);
 }
 
 void Renderer::TextureManager::TransitionTextureLayout(Texture& texture, const VkFormat& format, const VkImageLayout& oldLayout, const VkImageLayout& newLayout)

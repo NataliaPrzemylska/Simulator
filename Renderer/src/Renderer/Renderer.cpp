@@ -18,7 +18,7 @@ namespace Renderer {
 		m_ResourceManager.init();
 		m_GraphicsPipeline.init();
 		m_ResourceManager.m_FrameManager.init(&m_ResourceManager);
-		//initImGui();
+		initImGui();
 	}
 
 	void Renderer::initCommandPool()
@@ -91,6 +91,20 @@ namespace Renderer {
 
 	void Renderer::initImGui()
 	{
+
+		VkDescriptorPoolSize pool_sizes[] =
+		{
+			{ VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 },
+		};
+		VkDescriptorPoolCreateInfo pool_info = {};
+		pool_info.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		pool_info.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
+		pool_info.maxSets = 1;
+		pool_info.poolSizeCount = (uint32_t)IM_ARRAYSIZE(pool_sizes);
+		pool_info.pPoolSizes = pool_sizes;
+		VkResult err = vkCreateDescriptorPool(Application::Get()->getNativeDevice(), &pool_info, nullptr, &m_ImGuiDescriptorPool);
+		check_vk_result(err);
+
 		IMGUI_CHECKVERSION();
 		ImGui::CreateContext();
 		ImGuiIO& io = ImGui::GetIO(); (void)io;
@@ -108,7 +122,7 @@ namespace Renderer {
 		init_info.QueueFamily = m_Device.m_GraphicsQueue.m_QueueFamilyIndices.graphicsFamily.value();
 		init_info.Queue = *m_Device.m_GraphicsQueue.m_VulkanQueue.get();
 		init_info.PipelineCache = VK_NULL_HANDLE;
-		init_info.DescriptorPool = VK_NULL_HANDLE;
+		init_info.DescriptorPool = m_ImGuiDescriptorPool;
 		init_info.RenderPass = m_RenderPass;
 		init_info.Subpass = 0;
 		init_info.MinImageCount = 2;
@@ -123,6 +137,8 @@ namespace Renderer {
 // Clenup
 	void Renderer::cleanUp()
 	{
+		ImGui_ImplVulkan_Shutdown();
+		vkDestroyDescriptorPool(Application::Get()->getNativeDevice(), m_ImGuiDescriptorPool, nullptr);
 		vkDestroyCommandPool(Application::Get()->getNativeDevice(), m_PoolForOneTimeOperations, nullptr);
 		m_ResourceManager.m_FrameManager.cleanUp();
 		m_ResourceManager.cleanUp();
@@ -134,17 +150,19 @@ namespace Renderer {
 // Basic functions
 	void Renderer::onRender()
 	{
+		Application::Get()->m_Camera->OnUpdate();
 		m_ResourceManager.m_FrameManager.drawFrame();
 	}
 
 	void Renderer::onImGuiRender()
 	{
-	}
-
-	void Renderer::loadScene(Scene& scene)
-	{
-		m_CurrentScene = scene;
-
+		ImGui_ImplVulkan_NewFrame();
+		ImGui_ImplGlfw_NewFrame();
+		ImGui::NewFrame();
+		ImGui::Begin("panel");
+		ImGui::Text("panel text");
+		ImGui::End();
+		ImGui::Render();
 	}
 
 

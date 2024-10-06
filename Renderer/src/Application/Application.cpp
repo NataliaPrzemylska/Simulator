@@ -12,8 +12,6 @@ namespace Renderer {
 
 	void Application::run()
 	{
-		m_Scene.m_Images = { { CUBE_PATH, Image_Texture} };
-		m_Scene.m_State = SceneState_WaitingForLoading;
 		m_Window.init();
 		m_Renderer.init();
 		BEGIN_SESSION("main loop", "mainloop.json");
@@ -27,8 +25,8 @@ namespace Renderer {
 	{
 		while (!glfwWindowShouldClose(m_Window.getNativeWindow())) {
 			glfwPollEvents();
-			m_Renderer.onRender();
 			m_Renderer.onImGuiRender();
+			m_Renderer.onRender();
 		}
 	}
 

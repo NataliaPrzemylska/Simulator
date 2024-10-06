@@ -194,7 +194,8 @@ namespace Renderer {
 
             VkFramebufferCreateInfo framebufferInfo{};
             framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-            framebufferInfo.renderPass = Application::Get()->getRenderer().m_RenderPass;
+            Renderer& r = Application::Get()->getRenderer();
+            framebufferInfo.renderPass = Application::Get()->m_Renderer.m_RenderPass;
             framebufferInfo.attachmentCount = 1;
             framebufferInfo.pAttachments = attachments;
             framebufferInfo.width = m_Extent.width;
